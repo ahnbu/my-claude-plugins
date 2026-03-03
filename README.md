@@ -68,6 +68,33 @@ my-claude-plugins/
 
 ---
 
+## 마켓플레이스 등록
+
+### GitHub 레포로 등록 (권장)
+
+```bash
+claude plugin marketplace add ahnbu/my-claude-plugins
+```
+
+push 후 `claude plugin update <plugin-name>`으로 갱신 가능.
+
+### 로컬 경로로 등록 (오프라인)
+
+```bash
+claude plugin marketplace add "C:/Users/ahnbu/.claude/my-claude-plugins"
+```
+
+### 플러그인 설치
+
+```bash
+claude plugin install my-session-wrap
+claude plugin install my-cowork
+claude plugin install my-session-dashboard
+claude plugin install my-session-id
+```
+
+---
+
 ## 플러그인: `my-session-wrap`
 
 세션 마무리 시 실행하는 경량 워크플로우. `/wrap` 커맨드로 실행.

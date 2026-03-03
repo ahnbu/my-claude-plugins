@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-03 | docs | - | README.md — 마켓플레이스 등록 섹션 추가 (GitHub 레포·로컬 경로 등록, 플러그인 설치 명령어) |
 | 2026-03-02 | docs | - | docs/my-session-wrap — v2 문서에 §9 실제 실행 결과 검증 추가 (워크플로우 흐름·3개 체크포인트·핵심 현상 해소 확인) |
 | 2026-03-02 | docs | - | docs/my-session-wrap — CHANGELOG 이중 작성 분석 v1/v2 문서 추가 (§8 추후 과제·고도화 관점 포함) |
 | 2026-03-02 | fix | - | my-session-wrap SKILL.md Step 3-2 재구성 — handoff 커밋 단계 제거, 관심사별 분리 커밋으로 변경; .gitignore에 handoff/ 추가 |
