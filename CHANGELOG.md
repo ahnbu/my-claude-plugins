@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-05 | fix | - | `my-session-wrap` capture-session-id.js — CLAUDE_ENV_FILE 가용성 확인용 디버그 로깅 추가 (`~/session-id-debug.log`). 멀티세션 충돌 대책 Phase 1 검증용 임시 코드 |
 | 2026-03-05 | fix | - | `my-session-wrap` SKILL.md Step 2-2 — `next-handoff.sh` 경로를 `$(dirname "$0")` 에서 bash fallback(로컬 dev → 캐시 순 탐색)으로 교체. SKILL.md는 마크다운 프롬프트이므로 `$0` 미작동, AI가 스크립트를 우회하여 날짜 오류 발생하던 문제 해결 |
 | 2026-03-05 | feat | my-session-wrap 2.7.0 | `/continue` — Session ID(UUID v4) 감지 분기 추가: 입력에 UUID가 있으면 `~/.claude/projects/*/{id}.jsonl`을 직접 탐색하여 컨텍스트 복원(경로 A), 없으면 기존 handoff 흐름(경로 B) 유지. `allowed-tools`에 `Grep` 추가 |
 | 2026-03-05 | fix | - | `my-session-wrap` SKILL.md Step 3-1 — CHANGELOG.md 경로를 CWD 상대경로에서 `<ProjectRoot>/CHANGELOG.md` 역산 방식으로 변경 (handoff 경로의 `_handoff/` 부모 = ProjectRoot) |
