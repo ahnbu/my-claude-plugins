@@ -73,12 +73,14 @@ git diff --name-only HEAD 2>/dev/null; git diff --name-only --cached 2>/dev/null
 
 아래 순서로 획득하라:
 
-```bash
-# 1차: JSONL 최신 파일명 (현재 세션의 transcript = 가장 최근 수정된 JSONL)
-ENCODED=$(pwd | sed 's|\\|/|g' | sed 's|/|--|g' | sed 's|^C:||' | sed 's|^--|C--|')
-ls -t ~/.claude/projects/${ENCODED}/*.jsonl 2>/dev/null | head -1 | xargs -I{} basename {} .jsonl
+**1차: system-reminder에서 직접 탐색 (멀티세션 안전)**
 
-# 비어있으면 2차: 파일 fallback
+현재 대화 컨텍스트의 system-reminder 메시지에 `[session_id=XXXX]` 패턴이 포함되어 있다.
+이 값을 직접 읽어라. (UserPromptSubmit hook이 매 프롬프트 직전 주입)
+
+**2차: 파일 fallback (system-reminder에서 찾지 못한 경우)**
+
+```bash
 cat .claude/.current-session-id 2>/dev/null || echo "(획득 실패)"
 ```
 
