@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-05 | feat | my-session-wrap 2.7.0 | `/continue` — Session ID(UUID v4) 감지 분기 추가: 입력에 UUID가 있으면 `~/.claude/projects/*/{id}.jsonl`을 직접 탐색하여 컨텍스트 복원(경로 A), 없으면 기존 handoff 흐름(경로 B) 유지. `allowed-tools`에 `Grep` 추가 |
 | 2026-03-05 | fix | - | `my-session-wrap` SKILL.md Step 3-1 — CHANGELOG.md 경로를 CWD 상대경로에서 `<ProjectRoot>/CHANGELOG.md` 역산 방식으로 변경 (handoff 경로의 `_handoff/` 부모 = ProjectRoot) |
 | 2026-03-05 | fix | - | `my-session-wrap` Claude Code 버전 ProjectRoot 판정 추가 — `next-handoff.sh`에 git root → 마커 스캔(3단계) → throw 로직 구현, SKILL.md Step 2-2 인라인 코드를 스크립트 위임으로 교체 |
 | 2026-03-05 | fix | - | `wrap` 스킬 ProjectRoot 판정 로직 추가 — `next-handoff.ps1`에 `-ProjectRoot` 파라미터 및 자동 탐색(git root → 마커 스캔 3단계 → throw) 구현, handoff 경로 절대경로 강제, `-Verbose` 옵션 추가. `SKILL.md` 경로 결정 4단계 우선순위 문서화. Codex·Gemini wrap SKILL.md 및 CHANGELOG.md 동기화 |
