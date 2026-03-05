@@ -12,6 +12,7 @@
 |------|------|------|-----------|
 | 2026-03-05 | docs | - | `_handoff/` + `_docs/` 파일명 일괄 규격 적용 — 하이픈 구분에서 언더스코어 구분으로 35개 파일 리네임 |
 | 2026-03-05 | docs | - | 미추적 문서 3건 정리 — `_docs/my-session-wrap/20260305_세션ID멀티세션충돌_대책_계획.md`, `_docs/my-session-wrap/task_plan.md`, `_handoff/handoff_20260305_01_대시보드-경로복사-복사버튼-UI개선.md` 추가 |
+| 2026-03-05 | refactor | my-session-wrap 2.8.1 | `capture-session-id.js` SessionStart 파일 기록 분기 제거 (dead code — UPS hook이 항상 먼저 발동하므로 파일 fallback 에지케이스 없음). `hooks.json` SessionStart에서 capture-session-id hook 엔트리 제거. `fs`/`path` import 정리 |
 | 2026-03-05 | feat | my-session-wrap 2.8.0 | Phase 5 구현 — Hook stdout → 시스템 메시지 방식으로 멀티세션 세션 ID 완전 격리. `hooks.json` UserPromptSubmit 이벤트 추가(capture-session-id.js 연결). `capture-session-id.js` hook_event_name 분기: UPS→`console.log([session_id=...])` stdout 주입, SS→파일 기록 fallback 유지. `SKILL.md` 2-1절 세션 ID 획득 1차를 system-reminder `[session_id=...]` 패턴 탐색으로 변경 |
 | 2026-03-05 | docs | - | `my-session-dashboard` — 계획 문서 추가 (`20260305_세션대시보드_경로복사_계획.md`): 파일 경로 복사·문서전체복사·헤더 레이아웃 개선 실행 결과 포함 |
 | 2026-03-05 | feat | my-session-dashboard 1.2.0 | `build.js` — `processSession`·`parsePlan` metadata에 `filePath`(절대경로) 추가. `index.html` — 헤더 레이아웃 재배치(`[검색][필터][통계]`), detail-header에 파일 경로 + 경로 복사 버튼 추가, Plan h2 행에 `문서전체복사` 버튼 배치, 복사 버튼 accent 색상 시각화 + 토스트 알림 |
