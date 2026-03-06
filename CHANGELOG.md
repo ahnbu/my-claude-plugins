@@ -10,6 +10,9 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-06 | docs | - | `my-session-dashboard` — 플러그인 독립 전환 계획 문서 추가 (`20260306_플러그인_독립모듈_전환_계획.md`): 전체 플러그인 hook 분석, 독립 전환 가능 판단, 7단계 실행 계획 포함 |
+| 2026-03-06 | docs | - | `my-session-dashboard` — 세션 대시보드 로컬 서버 구현 계획 문서 추가 (`20260306_세션대시보드_로컬서버_계획.md`): serve.js 구현 이력, 버그 발견·수정 과정, 설계 진화 3단계 포함 |
+| 2026-03-06 | feat | my-session-dashboard 1.3.0 | `serve.js` 신규 — 로컬 HTTP 서버 + SSE 빌드 오케스트레이션. `session.bat` 신규. `generate-icon.js` + `dashboard.ico` (32x32 ICO, 순수 Buffer). `세션대시보드.lnk` 신규 (dashboard.ico 포함). `SKILL.md` 단순화 (4단계→2단계, node serve.js 호출). serve.js 버그 수정: output 경로 불일치(L17 `../` 추가), IPv4 바인딩 문제(`server.listen(0)` 전환), exec URL 모호성 (`start "" "url"`) |
 | 2026-03-06 | chore | - | 산재 문서/_handoff 파일을 루트 `_docs/`·`_handoff/`로 통일 — `_docs/my-session-wrap/_handoff/` 5개→루트 `_handoff/`, 플러그인 내부 문서 3개→`_docs/` 이동, `.current-session-id` 임시파일 삭제 |
 | 2026-03-06 | docs | - | 프로젝트 CLAUDE.md `### Handoff 문서` 섹션 삭제 — 글로벌 CLAUDE.md(L50)에 동일 규칙 있으므로 중복 제거 |
 | 2026-03-05 | docs | - | `_handoff/` + `_docs/` 파일명 일괄 규격 적용 — 하이픈 구분에서 언더스코어 구분으로 35개 파일 리네임 |
