@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-07 | feat | - | `my-session-wrap/commands/cp.md` — `/cp` 멀티 레포 지원: 변경 파일별 레포 루트 감지 → 레포별 그룹핑 → CHANGELOG + 커밋 + 푸시 개별 처리 |
 | 2026-03-07 | fix | - | `my-session-wrap` handoff 세션 경로 full path 기재 — SKILL.md `~/.claude/...` 단축형 제거 후 `C:/Users/ahnbu/.claude/projects/...` 명시, `세션 경로:` 필드를 template.md에 추가 |
 | 2026-03-06 | fix | - | `my-session-wrap` SKILL.md 3-1/3-2절 — CHANGELOG 일괄 추가 후 커밋 분리 시 pre-commit hook 차단 버그 수정: 3-1은 위치·양식 확인만, 3-2에서 "관심사 1줄 추가 → git add → commit" 사이클 반복 패턴으로 변경 |
 | 2026-03-06 | fix | - | `my-session-wrap/commands/cp.md` — remote 없는 레포에서 push 시도 방지: git remote 확인 후 없으면 "로컬 전용 레포 — push 생략" 안내로 분기 |
