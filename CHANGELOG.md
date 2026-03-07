@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-07 | feat | - | `taskmaster-cli` 플러그인 신규 추가 — task-master-start/stop, tm-done/list/next/parse-prd/progress/show 8개 스킬 |
 | 2026-03-07 | feat | - | `my-session-wrap` SKILL.md — `/wrap` 스킬 멀티 레포 그룹핑 지원: Step 1 레포 루트 수집, Step 3 레포별 CHANGELOG·커밋 순회 처리 추가 |
 | 2026-03-07 | feat | - | `my-session-wrap/commands/cp.md` — `/cp` 멀티 레포 지원: 변경 파일별 레포 루트 감지 → 레포별 그룹핑 → CHANGELOG + 커밋 + 푸시 개별 처리 |
 | 2026-03-07 | fix | - | `my-session-wrap` handoff 세션 경로 full path 기재 — SKILL.md `~/.claude/...` 단축형 제거 후 `C:/Users/ahnbu/.claude/projects/...` 명시, `세션 경로:` 필드를 template.md에 추가 |
