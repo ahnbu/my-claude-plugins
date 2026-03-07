@@ -85,8 +85,8 @@ cat .claude/.current-session-id 2>/dev/null || echo "(획득 실패)"
 ```
 
 - 획득한 값을 handoff 문서 헤더의 `세션 ID:` 필드에 기입
-- 이 세션 ID로 `~/.claude/projects/<encoded-cwd>/<sessionId>.jsonl` 조회하여 검증 가능
-- 둘 다 비어있으면 `세션 ID: (획득 실패)` 로 기재하고 사용자에게 안내
+- 세션 경로를 `C:/Users/ahnbu/.claude/projects/<encoded-cwd>/<sessionId>.jsonl` 형식으로 구성하여 `세션 경로:` 필드에 기재 (`~` 단축형 금지)
+- 둘 다 비어있으면 `세션 ID: (획득 실패)`, `세션 경로: (확인 불가)` 로 기재하고 사용자에게 안내
 
 ### 2-2. 파일 경로 생성 (절대 생략 불가)
 

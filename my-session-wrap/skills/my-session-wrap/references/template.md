@@ -6,6 +6,7 @@
 # Handoff — [작업명] (세션 NN)
 > 날짜: YYYY-MM-DD
 > 세션 ID: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+> 세션 경로: [세션 파일 절대 경로 — `~` 단축형 금지]
 > 상태: 진행중 | 세션완료 | 전체완료
 
 ---
