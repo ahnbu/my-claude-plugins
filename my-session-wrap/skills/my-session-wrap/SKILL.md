@@ -22,10 +22,34 @@ Step 4. 규칙 후보 확인 + 재개 안내
 
 ---
 
-## Step 1: Git 감지
+## Step 1: Git 감지 + 멀티 레포 그룹핑
 
 ```bash
 git status --short 2>/dev/null && echo "GIT_AVAILABLE" || echo "NO_GIT"
+```
+
+Git이 감지되면, 이번 세션에서 변경된 파일들의 레포 루트를 수집하여 그룹핑한다:
+
+```bash
+# 변경된 파일 목록 수집 (미커밋 + 스테이지 + 언트랙)
+{
+  git diff --name-only HEAD 2>/dev/null
+  git diff --name-only --cached 2>/dev/null
+  git ls-files --others --exclude-standard 2>/dev/null
+} | sort -u | while read f; do
+  # 각 파일의 레포 루트 감지
+  repo=$(git -C "$(dirname "$f")" rev-parse --show-toplevel 2>/dev/null)
+  [ -n "$repo" ] && echo "$repo"
+done | sort -u
+```
+
+- 결과가 **1개**이면 단일 레포 — 기존 흐름과 동일하게 진행
+- 결과가 **2개 이상**이면 멀티 레포 — 각 레포를 `REPOS` 목록으로 기억하고, 이후 Step 3에서 레포별로 순회
+
+```
+📋 감지된 레포 목록:
+  📂 /d/project-a   (파일 N개)
+  📂 /c/Users/.claude/my-claude-plugins/my-plugin   (파일 M개)
 ```
 
 ---
@@ -130,51 +154,57 @@ handoff 파일 저장 후 완료.
 
 ### Git 있는 경우
 
-#### 3-1. CHANGELOG.md 위치 확인
+#### 3-1. CHANGELOG.md 위치 확인 (레포별)
 
-Step 2-2에서 `next-handoff.sh`가 반환한 handoff 절대경로에서 ProjectRoot를 역산한다:
+Step 1에서 감지한 **각 레포 루트**마다 CHANGELOG.md 존재 여부를 개별 확인한다.
 
-```
-handoff 경로 예: /d/project/_handoff/handoff_xxx.md
-                  └─ _handoff/ 의 부모 = ProjectRoot = /d/project
-→ CHANGELOG.md 경로: <ProjectRoot>/CHANGELOG.md
-```
+> 단일 레포인 경우: 해당 레포 루트 1개에만 적용 (기존과 동일)
+> 멀티 레포인 경우: 감지된 모든 레포 루트에 대해 아래를 반복
 
 ```bash
-# HANDOFF_PATH = Step 2-2에서 stdout으로 받은 절대경로
-PROJECT_ROOT="$(dirname "$(dirname "$HANDOFF_PATH")")"
-ls "$PROJECT_ROOT/CHANGELOG.md" 2>/dev/null && echo "EXISTS" || echo "NOT_FOUND"
+# REPO_ROOT = 각 레포의 루트 경로 (Step 1에서 감지)
+ls "$REPO_ROOT/CHANGELOG.md" 2>/dev/null && echo "EXISTS" || echo "NOT_FOUND"
 ```
 
 - **EXISTS**: 기존 파일의 양식을 Read로 확인해 둔다.
-- **NOT_FOUND**: `C:\Users\ahnbu\CHANGELOG_TEMPLATE.md`를 Read하여 형식을 확인한 후 `<ProjectRoot>/CHANGELOG.md`로 새로 생성.
+- **NOT_FOUND**: `C:\Users\ahnbu\CHANGELOG_TEMPLATE.md`를 Read하여 형식을 확인한 후 `<REPO_ROOT>/CHANGELOG.md`로 새로 생성.
 - **CWD 상대경로(`ls CHANGELOG.md`)로 탐색 금지** — 실행 위치에 따라 잘못된 파일을 찾거나 서브폴더에 새 파일을 생성하는 문제가 발생한다.
 
-#### 3-2. 관심사별 CHANGELOG 추가 + 커밋 (반복)
+#### 3-2. 관심사별 CHANGELOG 추가 + 커밋 (레포별 순회)
 
-미커밋 작업물을 관심사별로 분류한 뒤, **관심사 1건마다 아래 사이클을 반복**한다:
+미커밋 작업물을 **레포별로 그룹핑**한 뒤, 레포마다 관심사별로 분류하여 **관심사 1건마다 아래 사이클을 반복**한다:
 
-1. CHANGELOG.md에 **해당 관심사 1줄만** 추가 (Edit)
-2. `git add <해당 관심사 작업물> CHANGELOG.md`
-3. `git commit`
+1. 해당 레포의 CHANGELOG.md에 **관심사 1줄만** 추가 (Edit)
+2. `git -C <레포루트> add <해당 관심사 작업물> CHANGELOG.md`
+3. `git -C <레포루트> commit`
 
 > ⚠️ **CHANGELOG를 한꺼번에 여러 줄 추가한 뒤 커밋을 분리하면 pre-commit hook에 차단된다.**
 > 반드시 "1줄 추가 → 커밋" 사이클을 관심사 수만큼 반복하라.
 
 ```bash
-# ── 관심사 A ──
-# 1) CHANGELOG에 관심사 A 항목 1줄 추가 (Edit 도구)
-git add <관심사A 파일들> CHANGELOG.md
-git commit -m "<type>(<scope>): <한 줄 요약>"
+# ══ 📂 레포 A (/d/project-a) ══
 
-# ── 관심사 B ──
-# 1) CHANGELOG에 관심사 B 항목 1줄 추가 (Edit 도구)
-git add <관심사B 파일들> CHANGELOG.md
-git commit -m "<type>(<scope>): <한 줄 요약>"
+# ── 관심사 A-1 ──
+# 1) 레포 A의 CHANGELOG에 관심사 A-1 항목 1줄 추가 (Edit 도구)
+git -C /d/project-a add <관심사A-1 파일들> CHANGELOG.md
+git -C /d/project-a commit -m "<type>(<scope>): <한 줄 요약>"
+
+# ── 관심사 A-2 ──
+# 1) 레포 A의 CHANGELOG에 관심사 A-2 항목 1줄 추가 (Edit 도구)
+git -C /d/project-a add <관심사A-2 파일들> CHANGELOG.md
+git -C /d/project-a commit -m "<type>(<scope>): <한 줄 요약>"
+
+# ══ 📂 레포 B (/c/Users/.claude/my-plugin) ══
+
+# ── 관심사 B-1 ──
+# 1) 레포 B의 CHANGELOG에 관심사 B-1 항목 1줄 추가 (Edit 도구)
+git -C /c/Users/.claude/my-plugin add <관심사B-1 파일들> CHANGELOG.md
+git -C /c/Users/.claude/my-plugin commit -m "<type>(<scope>): <한 줄 요약>"
 ```
 
 - 같은 관심사(같은 맥락·목적)의 파일은 하나의 커밋으로 묶는다.
 - 맥락이 다른 파일은 별도 커밋으로 분리한다.
+- 단일 레포인 경우 `git -C <레포루트>` 없이 기존처럼 `git add / git commit`으로 진행해도 동일.
 - Scope는 실제 변경 범위로 작성 (포괄값 금지).
 
 > **handoff 파일은 커밋하지 않는다.** `_handoff/`는 `.gitignore`에 등록된 세션 메타데이터이므로 git이 추적하지 않는다.
