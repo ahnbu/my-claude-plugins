@@ -19,6 +19,10 @@ node_modules/
 output/
 
 handoff/
+_handoff/
+
+# Playwright MCP
+.playwright-mcp/
 
 # bkit (auto-generated)
 .bkit/

@@ -10,6 +10,9 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-08 | docs | - | Playwright MCP vs CLI 비교 및 CLI 우선 규칙 문서 추가 |
+| 2026-03-08 | docs | - | `my-session-dashboard` — Codex 세션 통합 대시보드 스크린샷(dashboard-*.png) 및 기능 요약 문서 추가 |
+| 2026-03-08 | chore | - | `.gitignore` — `_handoff/`, `.playwright-mcp/` 추가 |
 | 2026-03-08 | fix | - | `my-session-dashboard` — 검색 범위 확대: 대화 본문 3000→10000자, toolNames 도구명 검색 필드 추가 |
 | 2026-03-08 | chore | - | `my-session-dashboard` — 타입 필터 탭 "Claude" → "Session" 네이밍 변경 |
 | 2026-03-08 | fix | - | `my-session-dashboard` — `copyDoc` Plan 본문 첫 줄 `# 제목` 메타 헤더 중복 제거 (`meta.type === "plan"` 분기) |
