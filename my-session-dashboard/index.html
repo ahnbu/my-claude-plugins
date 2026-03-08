@@ -955,6 +955,8 @@
           s.projectDisplay,
           s.gitBranch,
         ];
+        // toolNames 키 추가 (도구명으로 검색 가능)
+        if (s.toolNames) fields.push(...Object.keys(s.toolNames));
         // 세션/plan 모두 대화 내용 검색 대상에 포함
         const conv = loadConversation(s.sessionId);
         if (typeof conv === "string") {
@@ -966,7 +968,7 @@
             .filter(m => m.text)
             .map(m => m.text)
             .join(" ");
-          fields.push(texts.substring(0, 3000));
+          fields.push(texts.substring(0, 10000));
         }
         const searchable = fields.join(" ").toLowerCase();
         // 공백으로 분리된 각 단어가 모두 포함되어야 함 (AND 검색)
