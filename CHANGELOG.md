@@ -10,7 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
-| 2026-03-08 | fix | - | `my-session-dashboard` — 프로젝트 필터 펼침 시 하단 가림 수정: `.filters` max-height 40vh + overflow-y auto 추가 |
+| 2026-03-08 | fix | - | `my-session-dashboard` — 프로젝트 필터 펼침 시 하단 가림 수정: `grid-template-rows` 4행으로 확장 + `.sidebar`/`.main`에 `grid-row: 4` 명시, `.filters` max-height 40vh + overflow-y auto |
 | 2026-03-08 | feat | - | `my-session-dashboard` — 검색창 X 버튼 + ESC 더블탭 초기화: 입력 시 X 표시, 클릭 시 초기화, ESC 2회(300ms 내) 입력 초기화 |
 | 2026-03-08 | fix | - | `my-session-dashboard` — 검색 AND 지원: 공백으로 구분된 다중 단어 입력 시 모든 단어가 포함된 세션만 반환 |
 | 2026-03-08 | fix | - | `my-session-dashboard` — 세션 검색에 대화 내용(messages) 포함 확장 + 파일 경로 복사 버튼 백슬래시 누락 수정 (data-path 속성 방식으로 전환) |
