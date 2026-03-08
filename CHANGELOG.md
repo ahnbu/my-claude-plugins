@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-08 | fix | - | `my-session-dashboard` — `copyDoc` Plan 본문 첫 줄 `# 제목` 메타 헤더 중복 제거 (`meta.type === "plan"` 분기) |
 | 2026-03-08 | feat | my-session-dashboard 1.4.0 | `my-session-dashboard` — Codex 세션 통합 조회: `~/.codex/sessions/` JSONL 파싱 (`processCodexSession`, `loadCodexSessions`), Codex 탭 추가, 서브태스크 포함 토글, 주황 CODEX 배지, toolSummary Codex 도구 지원 (`shell`, `apply_patch`, `web_search`) |
 | 2026-03-08 | feat | - | `my-session-dashboard` — `copyDoc` Plan 유형 메타 헤더 추가(slug·수정일·글자수·프로젝트·파일) + `currentMeta` 전역 변수로 `sessions.find()` 중복 제거 |
 | 2026-03-08 | feat | - | `my-session-dashboard` — 문서 전체 복사 시 메타 정보 헤더 포함: 제목·프로젝트·브랜치·소요시간·토큰·모델·파일 경로 |

@@ -1520,7 +1520,11 @@
     }
 
     if (typeof content === "string") {
-      text = `${header}\n\n---\n\n${content}`;
+      let body = content;
+      if (meta.type === "plan") {
+        body = body.replace(/^#\s+.*\n*/, "");
+      }
+      text = `${header}\n\n---\n\n${body}`;
     } else if (Array.isArray(content)) {
       const body = content
         .filter(m => m.text)
