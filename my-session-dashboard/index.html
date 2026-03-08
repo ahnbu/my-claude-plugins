@@ -845,7 +845,7 @@
     const typeContainer = document.getElementById("typeFilters");
     const hasCodex = sessions.some((s) => s.type === "codex");
     let typeHtml = '<button class="filter-btn active" data-type-filter="all">전체</button>';
-    typeHtml += '<button class="filter-btn" data-type-filter="session">Claude</button>';
+    typeHtml += '<button class="filter-btn" data-type-filter="session">Session</button>';
     if (hasPlan) {
       typeHtml += '<button class="filter-btn" data-type-filter="plan">Plan</button>';
     }
