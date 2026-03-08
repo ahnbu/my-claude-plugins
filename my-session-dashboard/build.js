@@ -9,6 +9,10 @@ const CLAUDE_DIR = path.join(
 );
 const PROJECTS_DIR = path.join(CLAUDE_DIR, "projects");
 const PLANS_DIR = path.join(CLAUDE_DIR, "plans");
+const CODEX_DIR = path.join(
+  process.env.HOME || process.env.USERPROFILE,
+  ".codex", "sessions"
+);
 const DIST_DIR = path.join(__dirname, "..", "output", "session-dashboard");
 const CACHE_FILE = path.join(DIST_DIR, ".build-cache.json");
 
@@ -327,6 +331,226 @@ function findCwd(entries) {
   return "";
 }
 
+// ── Codex 세션 파싱 ──
+function processCodexSession(filePath) {
+  const entries = parseJSONL(filePath);
+  const absFilePath = path.resolve(filePath);
+  if (entries.length === 0) return null;
+
+  // session_meta에서 세션 정보 추출
+  const sessionMeta = entries.find((e) => e.type === "session_meta");
+  if (!sessionMeta) return null;
+
+  const payload = sessionMeta.payload || {};
+  const rawSessionId = payload.id || path.basename(filePath, ".jsonl");
+  const sessionId = "codex:" + rawSessionId;
+  const timestamp = payload.timestamp || sessionMeta.timestamp;
+  if (!timestamp || isNaN(new Date(timestamp).getTime())) return null;
+
+  const cwd = payload.cwd || "";
+  const gitBranch = (payload.git && payload.git.branch) ? payload.git.branch : "";
+  const originator = payload.originator || "codex_cli_rs";
+
+  // turn_context에서 model 수집
+  const models = new Set();
+  for (const entry of entries) {
+    if (entry.type === "turn_context" && entry.payload && entry.payload.model) {
+      models.add(entry.payload.model);
+    }
+  }
+
+  // 메시지 파싱
+  const messages = [];
+  let totalInputTokens = 0;
+  let totalOutputTokens = 0;
+  let lastTokenEntry = null;
+  let toolUseCount = 0;
+  const toolNames = {};
+
+  for (const entry of entries) {
+    const ts = entry.timestamp;
+
+    if (entry.type === "event_msg") {
+      const ep = entry.payload || {};
+      if (ep.type === "user_message" && ep.message) {
+        messages.push({
+          role: "user",
+          text: stripSystemTags(ep.message),
+          timestamp: ts,
+        });
+      } else if (ep.type === "token_count" && ep.info && ep.info.total_token_usage) {
+        lastTokenEntry = ep.info.total_token_usage;
+      }
+    } else if (entry.type === "response_item") {
+      const ep = entry.payload || {};
+      const pType = ep.type;
+
+      if (pType === "message") {
+        const role = ep.role;
+        if (role === "assistant") {
+          // content 배열에서 output_text 추출
+          let text = "";
+          if (Array.isArray(ep.content)) {
+            text = ep.content
+              .filter((c) => c.type === "output_text")
+              .map((c) => c.text || "")
+              .join("\n");
+          }
+          if (text) {
+            messages.push({ role: "assistant", text, timestamp: ts });
+          }
+        }
+        // user role은 event_msg/user_message로 이미 처리, developer(시스템) 스킵
+      } else if (pType === "function_call") {
+        const name = ep.name || "unknown";
+        let input = {};
+        try {
+          input = ep.arguments ? JSON.parse(ep.arguments) : {};
+        } catch {
+          input = { raw: ep.arguments };
+        }
+        toolUseCount++;
+        toolNames[name] = (toolNames[name] || 0) + 1;
+        // 이전 assistant 메시지에 도구 추가, 없으면 새 메시지 생성
+        const prev = messages[messages.length - 1];
+        if (prev && prev.role === "assistant") {
+          prev.tools = prev.tools ? [...prev.tools, { name, input }] : [{ name, input }];
+        } else {
+          messages.push({ role: "assistant", timestamp: ts, tools: [{ name, input }] });
+        }
+      } else if (pType === "custom_tool_call") {
+        const name = ep.name || "unknown";
+        const input = ep.input !== undefined ? ep.input : {};
+        toolUseCount++;
+        toolNames[name] = (toolNames[name] || 0) + 1;
+        const prev = messages[messages.length - 1];
+        if (prev && prev.role === "assistant") {
+          prev.tools = prev.tools ? [...prev.tools, { name, input }] : [{ name, input }];
+        } else {
+          messages.push({ role: "assistant", timestamp: ts, tools: [{ name, input }] });
+        }
+      }
+      // reasoning, function_call_output, custom_tool_call_output 스킵
+    }
+  }
+
+  // 토큰 집계
+  if (lastTokenEntry) {
+    totalInputTokens = (lastTokenEntry.input_tokens || 0) + (lastTokenEntry.cached_input_tokens || 0);
+    totalOutputTokens = (lastTokenEntry.output_tokens || 0) + (lastTokenEntry.reasoning_output_tokens || 0);
+  }
+
+  if (messages.length === 0) return null;
+
+  // 키워드 추출: 첫 user 메시지 텍스트에서
+  const firstUserMsg = messages.find((m) => m.role === "user");
+  const firstMsgText = firstUserMsg ? firstUserMsg.text : "";
+  const keywords = extractKeywords(firstMsgText);
+
+  const timeStr = formatTimestamp(timestamp);
+  const title = [timeStr, ...keywords].join("_");
+  const lastEntry = entries[entries.length - 1];
+  const project = normalizeProjectPath(cwd);
+  const messageCount = messages.filter((m) => m.role === "user").length;
+
+  const metadata = {
+    sessionId,
+    type: "codex",
+    originator,
+    title,
+    keywords,
+    timestamp,
+    lastTimestamp: lastEntry.timestamp,
+    project,
+    projectDisplay: project,
+    gitBranch,
+    models: [...models],
+    messageCount,
+    toolUseCount,
+    totalInputTokens,
+    totalOutputTokens,
+    toolNames,
+    firstMessage: firstMsgText.substring(0, 200),
+    filePath: absFilePath,
+  };
+
+  return { metadata, messages };
+}
+
+function loadCodexSessions(cache, newCache) {
+  const codexResults = [];
+  let newCount = 0;
+  let cachedCount = 0;
+
+  if (!fs.existsSync(CODEX_DIR)) {
+    console.warn(`⚠️  Codex 세션 디렉토리 없음: ${CODEX_DIR}`);
+    return { codexResults, newCount, cachedCount };
+  }
+
+  // YYYY/MM/DD/ 구조 순회
+  let years;
+  try { years = fs.readdirSync(CODEX_DIR); } catch { return { codexResults, newCount, cachedCount }; }
+
+  for (const year of years) {
+    const yearPath = path.join(CODEX_DIR, year);
+    let yearStat;
+    try { yearStat = fs.statSync(yearPath); } catch { continue; }
+    if (!yearStat.isDirectory()) continue;
+
+    let months;
+    try { months = fs.readdirSync(yearPath); } catch { continue; }
+    for (const month of months) {
+      const monthPath = path.join(yearPath, month);
+      let monthStat;
+      try { monthStat = fs.statSync(monthPath); } catch { continue; }
+      if (!monthStat.isDirectory()) continue;
+
+      let days;
+      try { days = fs.readdirSync(monthPath); } catch { continue; }
+      for (const day of days) {
+        const dayPath = path.join(monthPath, day);
+        let dayStat;
+        try { dayStat = fs.statSync(dayPath); } catch { continue; }
+        if (!dayStat.isDirectory()) continue;
+
+        let files;
+        try { files = fs.readdirSync(dayPath); } catch { continue; }
+        for (const file of files) {
+          if (!file.endsWith(".jsonl")) continue;
+          const filePath = path.join(dayPath, file);
+          const cacheKey = "codex:" + path.basename(file, ".jsonl");
+
+          try {
+            const stat = fs.statSync(filePath);
+            const mtime = stat.mtimeMs;
+
+            if (cache[cacheKey] && cache[cacheKey].mtime === mtime) {
+              const cached = cache[cacheKey];
+              if (cached.metadata && cached.metadata.messageCount > 0) {
+                codexResults.push({ metadata: cached.metadata, messages: cached.messages });
+                newCache[cacheKey] = cached;
+                cachedCount++;
+              }
+              continue;
+            }
+
+            const result = processCodexSession(filePath);
+            if (!result) continue;
+            if (result.metadata.messageCount === 0) continue;
+            codexResults.push(result);
+            newCache[cacheKey] = { mtime, metadata: result.metadata, messages: result.messages };
+            newCount++;
+          } catch (err) {
+            console.warn(`⚠️  Codex 파싱 실패: ${file} — ${err.message}`);
+          }
+        }
+      }
+    }
+  }
+
+  return { codexResults, newCount, cachedCount };
+}
+
 // ── Plan 파싱 ──
 function parsePlan(filePath) {
   const absFilePath = path.resolve(filePath);
@@ -536,8 +760,11 @@ function main() {
   // Plans 로드
   const { planResults, newCount: planNew, cachedCount: planCached } = loadPlans(cache, newCache);
 
+  // Codex 세션 로드
+  const { codexResults, newCount: codexNew, cachedCount: codexCached } = loadCodexSessions(cache, newCache);
+
   // 병합 & 정렬
-  const allResults = [...sessionResults, ...planResults];
+  const allResults = [...sessionResults, ...planResults, ...codexResults];
   allResults.sort(
     (a, b) => new Date(b.metadata.timestamp) - new Date(a.metadata.timestamp)
   );
@@ -551,6 +778,8 @@ function main() {
       sessionsData[r.metadata.sessionId] = r.messages;
     }
   }
+
+  // sessionsData에 codex 메시지 포함 (sessions/plan과 동일 구조로 추가됨 — 루프 처리)
 
   // Build self-contained HTML
   const metaJson = JSON.stringify(allMeta).replace(/<\//g, "<\\/");
@@ -570,7 +799,7 @@ window.__SESSIONS_DATA__ = ${dataJson};
   // 캐시 저장
   saveCache(newCache);
 
-  console.log(`✅ ${sessionResults.length}개 세션 (신규 ${newCount}, 캐시 ${cachedCount}) | ${planResults.length}개 플랜 (신규 ${planNew}, 캐시 ${planCached})`);
+  console.log(`✅ ${sessionResults.length}개 Claude 세션 (신규 ${newCount}, 캐시 ${cachedCount}) | ${planResults.length}개 플랜 (신규 ${planNew}, 캐시 ${planCached}) | ${codexResults.length}개 Codex 세션 (신규 ${codexNew}, 캐시 ${codexCached})`);
   console.log(`📁 출력: ${htmlDest}`);
   console.log(`\n🌐 브라우저에서 열기: ${htmlDest}`);
 }

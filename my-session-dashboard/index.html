@@ -24,6 +24,8 @@
     --warning: #d29922;
     --plan-accent: #7ee787;
     --plan-bg: #1a2a1a;
+    --codex-accent: #ff9f43;
+    --codex-bg: #2a1f0a;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -601,6 +603,20 @@
 
   .type-badge.plan { background: var(--plan-bg); color: var(--plan-accent); }
   .type-badge.completed { background: var(--bg-tertiary); color: var(--text-dim); }
+  .type-badge.codex { background: var(--codex-bg); color: var(--codex-accent); }
+
+  .session-item.codex-item { border-left: 3px solid var(--codex-accent); }
+  .session-item.codex-item.active { border-left: 3px solid var(--codex-accent); background: var(--bg-tertiary); }
+
+  .codex-sub-filter {
+    display: none;
+    font-size: 12px;
+    margin-left: 8px;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-muted);
+  }
+  .codex-sub-filter.visible { display: inline-flex; }
 
   .type-filters {
     display: flex;
@@ -778,6 +794,7 @@
   let activeFilter = "all";
   let activeTypeFilter = "all";
   let searchQuery = "";
+  let showCodexExec = false;
 
   const ROLE_LABELS = { user: "사용자", assistant: "어시스턴트" };
 
@@ -801,8 +818,9 @@
 
   // ── Stats ──
   function renderStats() {
-    const sessionCount = sessions.filter((s) => s.type !== "plan").length;
+    const sessionCount = sessions.filter((s) => s.type === "session").length;
     const planCount = sessions.filter((s) => s.type === "plan").length;
+    const codexCount = sessions.filter((s) => s.type === "codex").length;
     const totalTokens = sessions.reduce(
       (sum, s) => sum + (s.totalInputTokens || 0) + (s.totalOutputTokens || 0), 0
     );
@@ -811,8 +829,9 @@
       : totalTokens > 1_000
       ? (totalTokens / 1_000).toFixed(0) + "K"
       : totalTokens;
-    const parts = [`${sessionCount}개 세션`];
-    if (planCount > 0) parts.push(`${planCount}개 플랜`);
+    const parts = [`${sessionCount}개 Claude`];
+    if (codexCount > 0) parts.push(`${codexCount}개 Codex`);
+    if (planCount > 0) parts.push(`${planCount}개 Plan`);
     parts.push(`${tokenStr} 토큰`);
     document.getElementById("stats").textContent = parts.join(" | ");
   }
@@ -824,10 +843,15 @@
 
     // 타입 필터 → 헤더에 렌더
     const typeContainer = document.getElementById("typeFilters");
+    const hasCodex = sessions.some((s) => s.type === "codex");
     let typeHtml = '<button class="filter-btn active" data-type-filter="all">전체</button>';
-    typeHtml += '<button class="filter-btn" data-type-filter="session">세션</button>';
+    typeHtml += '<button class="filter-btn" data-type-filter="session">Claude</button>';
     if (hasPlan) {
-      typeHtml += '<button class="filter-btn" data-type-filter="plan">플랜</button>';
+      typeHtml += '<button class="filter-btn" data-type-filter="plan">Plan</button>';
+    }
+    if (hasCodex) {
+      typeHtml += '<button class="filter-btn" data-type-filter="codex">Codex</button>';
+      typeHtml += '<label class="codex-sub-filter" id="codexSubFilter"><input type="checkbox" id="codexExecCheck"> 서브태스크 포함</label>';
     }
     typeContainer.innerHTML = typeHtml;
 
@@ -837,8 +861,22 @@
       typeContainer.querySelectorAll("[data-type-filter]").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       activeTypeFilter = btn.dataset.typeFilter;
+      // Codex 서브필터 표시/숨김
+      const subFilter = document.getElementById("codexSubFilter");
+      if (subFilter) {
+        subFilter.classList.toggle("visible", activeTypeFilter === "codex");
+      }
       renderSessionList();
     });
+
+    // 서브태스크 포함 체크박스
+    const codexExecCheck = document.getElementById("codexExecCheck");
+    if (codexExecCheck) {
+      codexExecCheck.addEventListener("change", (e) => {
+        showCodexExec = e.target.checked;
+        renderSessionList();
+      });
+    }
 
     // 프로젝트 필터 → filters 행에 렌더
     const projContainer = document.getElementById("filters");
@@ -903,8 +941,11 @@
       const sType = s.type || "session";
       if (activeTypeFilter === "session" && sType !== "session") return false;
       if (activeTypeFilter === "plan" && sType !== "plan") return false;
-      // 프로젝트 필터 (세션에만 적용)
-      if (activeFilter !== "all" && sType === "session" && s.projectDisplay !== activeFilter) return false;
+      if (activeTypeFilter === "codex" && sType !== "codex") return false;
+      // Codex exec 필터: 전체/Codex 탭에서 showCodexExec=false 시 codex_exec 제외
+      if (sType === "codex" && !showCodexExec && s.originator === "codex_exec") return false;
+      // 프로젝트 필터 (세션/codex에 적용)
+      if (activeFilter !== "all" && (sType === "session" || sType === "codex") && s.projectDisplay !== activeFilter) return false;
       if (searchQuery) {
         const terms = searchQuery.toLowerCase().split(/\s+/).filter(Boolean);
         const fields = [
@@ -956,16 +997,20 @@
         });
 
         const isPlan = s.type === "plan";
+        const isCodex = s.type === "codex";
         const itemClass = "session-item" +
           (isActive ? " active" : "") +
           (isPlan ? " plan-item" : "") +
-          (isPlan && s.isCompleted ? " completed" : "");
+          (isPlan && s.isCompleted ? " completed" : "") +
+          (isCodex ? " codex-item" : "");
 
         const badge = isPlan
           ? (s.isCompleted
             ? '<span class="type-badge completed">완료</span>'
             : '<span class="type-badge plan">PLAN</span>')
-          : "";
+          : isCodex
+            ? `<span class="type-badge codex">${s.originator === "codex_exec" ? "EXEC" : "CODEX"}</span>`
+            : "";
 
         const metaInfo = isPlan
           ? `<span>${s.charCount || 0}자</span>`
@@ -1397,6 +1442,15 @@
     if (tool.name === "Grep" && input.pattern) return escapeHtml(input.pattern);
     if (tool.name === "Task" && input.description) return escapeHtml(input.description);
     if (tool.name === "WebFetch" && input.url) return escapeHtml(input.url);
+    // Codex 도구
+    if ((tool.name === "shell" || tool.name === "shell_command") && input.command) {
+      const cmd = String(input.command).length > 60
+        ? String(input.command).substring(0, 60) + "..."
+        : String(input.command);
+      return escapeHtml(cmd);
+    }
+    if (tool.name === "apply_patch") return "파일 패치 적용";
+    if (tool.name === "web_search" && input.query) return escapeHtml(String(input.query));
     return "";
   }
 
