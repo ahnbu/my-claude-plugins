@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-09 | docs | - | `CLAUDE.md`, `inject-plugin-guidelines.js` — 배포 절차 CLI 명령 명시: `claude plugin marketplace update` + `claude plugin update` (AI 직접 실행 가능, 마켓플레이스 직접 수정 금지 명문화) |
 | 2026-03-09 | docs | - | `my-session-dashboard/` — Bun segfault npm 전환 트레이드오프 분석 문서 추가 |
 | 2026-03-09 | docs | - | `_docs/` — 세션통합DB 관련 문서 3건 파일명 리네임 (순번 prefix 01/02/03 추가, 3번 문서 내용 업데이트) |
 | 2026-03-09 | feat | - | `my-session-dashboard/build.js` — 변경 없을 때 HTML rebuild early return: `totalNew === 0 && htmlDest 존재` 시 DB 쿼리·JSON.stringify·HTML 쓰기 전체 생략 |

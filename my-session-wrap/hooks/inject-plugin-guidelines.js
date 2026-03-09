@@ -18,9 +18,11 @@ process.stdin.on("end", () => {
 
 ━━━ 배포 절차 ━━━
 1. git push
-2. /plugin update  ← Claude Code가 marketplace pull + cache 반영 자동 처리
+2. CLAUDECODE="" claude plugin marketplace update my-claude-plugins
+3. CLAUDECODE="" claude plugin update <plugin-name>@my-claude-plugins
 
 ⚠️  순서 위반 금지. 임의 판단으로 단계 스킵 금지.
+⚠️  ~/.claude/plugins/marketplaces/ 직접 수정 금지.
     `);
   } catch (_) {}
 });

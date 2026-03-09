@@ -63,7 +63,7 @@ SessionStart 훅으로 매 세션 실행. 플러그인의 `commands/` 파일을 
 ```
 이 레포 (개발 공간)                GitHub              Claude Code 런타임
 ──────────────────────────────────────────────────────────────────────
-my-claude-plugins/          git push          /plugin update
+my-claude-plugins/          git push     claude plugin marketplace update
   .claude-plugin/              →                    →
     marketplace.json                     ~/.claude/plugins/marketplaces/
   my-session-wrap/                         my-claude-plugins/ (설치 결과)
@@ -72,7 +72,19 @@ my-claude-plugins/          git push          /plugin update
 ```
 
 - **이 레포**: 개발자가 직접 편집하는 소스. `marketplace.json` 포함.
-- **`~/.claude/plugins/marketplaces/`**: `/plugin update`가 자동 생성하는 설치 경로. Claude Code가 여기서 hooks/commands/skills를 로드. **직접 수정 금지** (다음 update 시 덮어씌워짐).
+- **`~/.claude/plugins/marketplaces/`**: 설치 경로. Claude Code가 여기서 hooks/commands/skills를 로드. **직접 수정 금지** (다음 update 시 덮어씌워짐).
+
+### 배포 CLI 명령 (AI가 직접 실행 가능)
+
+```bash
+# 1. 마켓플레이스 최신 코드 pull (GitHub → 설치 경로)
+CLAUDECODE="" claude plugin marketplace update my-claude-plugins
+
+# 2. 특정 플러그인 업데이트 (설치 경로 → 플러그인 캐시)
+CLAUDECODE="" claude plugin update <plugin-name>@my-claude-plugins
+```
+
+> TUI `/plugin update`와 동일한 동작. AI가 Bash 도구로 직접 실행할 수 있다.
 
 ## 문서 파일 이름 규칙
 
