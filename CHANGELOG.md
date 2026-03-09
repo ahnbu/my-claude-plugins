@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-09 | docs | - | `_docs/` — 세션통합DB 이슈 검토 문서 §1 원본 plan 전문으로 확장 (Context 표, 기술 비교표, 아키텍처, 스키마 포함) |
 | 2026-03-09 | chore | my-session-wrap 2.9.0 | 버전 2.8.1 → 2.9.0 bump — DB 전체 파이프라인 전환 + Stop 훅 추가 반영 |
 | 2026-03-09 | feat | - | `my-session-wrap` — Stop 훅 추가: `sync-session-stop.js` 세션 종료 시 `SessionDB.syncSingleSession(force)` 호출로 events DB 즉시 갱신 (Hybrid C) |
 | 2026-03-09 | feat | - | `my-session-wrap` — DB 전체 파이프라인 전환: `session-loader.js` DB events 직접 조회(`_loadEventsFromDb`), `session-normalizer.js` `fromDb: true` 분기로 `normalizeEntries` 스킵 → timeline/transcript JSONL 파싱 없이 동작 |
