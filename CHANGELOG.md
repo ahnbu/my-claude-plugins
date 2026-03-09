@@ -10,6 +10,8 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-09 | docs | - | `my-session-dashboard/` — Bun segfault npm 전환 트레이드오프 분석 문서 추가 |
+| 2026-03-09 | docs | - | `_docs/` — 세션통합DB 관련 문서 3건 파일명 리네임 (순번 prefix 01/02/03 추가, 3번 문서 내용 업데이트) |
 | 2026-03-09 | feat | - | `my-session-dashboard/build.js` — 변경 없을 때 HTML rebuild early return: `totalNew === 0 && htmlDest 존재` 시 DB 쿼리·JSON.stringify·HTML 쓰기 전체 생략 |
 | 2026-03-09 | fix | - | `shared/session-db.js` — Codex cacheKey UUID 불일치 수정: `rollout-...-UUID.jsonl` 파일명에서 UUID만 추출하여 DB session_id(`codex:UUID`)와 일치시킴 → 캐시 미스 376회/실행 → 0회, 2회차 빌드 0.76초 달성 |
 | 2026-03-09 | fix | - | `shared/session-db.js` — `sync()` 단일 트랜잭션 래핑 추가: 첫 실행 빌드 시간 1분+ → 4.5초 (약 13배 개선), autocommit으로 매 INSERT마다 fsync하던 문제 해결 |
