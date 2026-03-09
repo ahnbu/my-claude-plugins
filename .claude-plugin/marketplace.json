@@ -9,12 +9,6 @@
       "version": "2.8.1"
     },
     {
-      "name": "my-cowork",
-      "description": "Forked doc-coauthoring skill with AskUserQuestion mandatory rule",
-      "source": "./my-cowork",
-      "version": "1.1.3"
-    },
-    {
       "name": "my-session-dashboard",
       "description": "Claude Code 대화 세션을 시각적으로 탐색하는 대시보드",
       "source": "./my-session-dashboard",

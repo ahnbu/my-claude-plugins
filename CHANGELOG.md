@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-09 | feat | - | `my-session-dashboard` — 세션 ID 검색 지원 + 세션/Plan 상세 패널 헤더에 세션 ID 행 및 복사 버튼 추가 |
 | 2026-03-09 | feat | - | `my-session-wrap` — 세션 타임라인/트랜스크립트 분석 기능 추가: 공통 session parsing layer, `session-timeline`·`session-transcript` 스킬/CLI, `tool_result`/`planContent` 보존 정책, fixture 기반 `node --test` 검증 |
 | 2026-03-08 | docs | - | Playwright MCP vs CLI 비교 및 CLI 우선 규칙 문서 추가 |
 | 2026-03-08 | docs | - | `my-session-dashboard` — Codex 세션 통합 대시보드 스크린샷(dashboard-*.png) 및 기능 요약 문서 추가 |

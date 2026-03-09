@@ -954,6 +954,7 @@
           ...(s.keywords || []),
           s.projectDisplay,
           s.gitBranch,
+          s.sessionId,
         ];
         // toolNames 키 추가 (도구명으로 검색 가능)
         if (s.toolNames) fields.push(...Object.keys(s.toolNames));
@@ -1070,6 +1071,10 @@
           <span><span class="label">토큰:</span> ${tokenStr}</span>
           <span><span class="label">모델:</span> ${escapeHtml((meta.models || []).join(", "))}</span>
         </div>
+        ${meta.sessionId ? `<div class="file-path-row">
+          <span class="file-path-label">세션ID:</span>
+          <span class="file-path-value" title="${escapeAttr(meta.sessionId)}">${escapeHtml(meta.sessionId)}</span><button class="copy-btn" data-path="${escapeAttr(meta.sessionId)}" onclick="copyPath(this)">복사</button>
+        </div>` : ""}
         ${sessionFilePath ? `<div class="file-path-row">
           <span class="file-path-label">파일:</span>
           <span class="file-path-value" title="${escapeAttr(sessionFilePath)}">${escapeHtml(sessionFilePath)}</span><button class="copy-btn" data-path="${escapeAttr(sessionFilePath)}" onclick="copyPath(this)">복사</button>
@@ -1193,6 +1198,10 @@
           <span><span class="label">글자수:</span> ${(meta.charCount || 0).toLocaleString()}자</span>
           ${meta.projectDisplay ? `<span><span class="label">프로젝트:</span> ${escapeHtml(meta.projectDisplay)}</span>` : ""}
         </div>
+        ${meta.sessionId ? `<div class="file-path-row">
+          <span class="file-path-label">세션ID:</span>
+          <span class="file-path-value" title="${escapeAttr(meta.sessionId)}">${escapeHtml(meta.sessionId)}</span><button class="copy-btn" data-path="${escapeAttr(meta.sessionId)}" onclick="copyPath(this)">복사</button>
+        </div>` : ""}
         ${planFilePath ? `<div class="file-path-row">
           <span class="file-path-label">파일:</span>
           <span class="file-path-value" title="${escapeAttr(planFilePath)}">${escapeHtml(planFilePath)}</span><button class="copy-btn" data-path="${escapeAttr(planFilePath)}" onclick="copyPath(this)">복사</button>
