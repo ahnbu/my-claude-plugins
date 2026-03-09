@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-09 | docs | - | `_docs/` 폴더 구조 재편 — 문서 이동 반영 (`_docs/공통/`으로 세션이력분석·플러그인계획 통합, `_docs/my-session-dashboard/`로 문서 이동, `_docs/문서시스템연구/`·`_docs/세션이력분석/` 폴더 제거) |
 | 2026-03-09 | chore | - | `my-cowork`, `taskmaster-cli` 플러그인 제거 — git에서 삭제 반영 |
 | 2026-03-09 | feat | - | `my-session-dashboard` — 세션 ID 검색 지원 + 세션/Plan 상세 패널 헤더에 세션 ID 행 및 복사 버튼 추가 |
 | 2026-03-09 | feat | - | `my-session-wrap` — 세션 타임라인/트랜스크립트 분석 기능 추가: 공통 session parsing layer, `session-timeline`·`session-transcript` 스킬/CLI, `tool_result`/`planContent` 보존 정책, fixture 기반 `node --test` 검증 |
