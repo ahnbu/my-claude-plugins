@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-09 | fix | - | `shared/session-db.js` — `sync()` 단일 트랜잭션 래핑 추가: 첫 실행 빌드 시간 1분+ → 4.5초 (약 13배 개선), autocommit으로 매 INSERT마다 fsync하던 문제 해결 |
 | 2026-03-09 | docs | - | `_docs/` — 세션통합DB 이슈 검토 문서 §1 원본 plan 전문으로 확장 (Context 표, 기술 비교표, 아키텍처, 스키마 포함) |
 | 2026-03-09 | chore | my-session-wrap 2.9.0 | 버전 2.8.1 → 2.9.0 bump — DB 전체 파이프라인 전환 + Stop 훅 추가 반영 |
 | 2026-03-09 | feat | - | `my-session-wrap` — Stop 훅 추가: `sync-session-stop.js` 세션 종료 시 `SessionDB.syncSingleSession(force)` 호출로 events DB 즉시 갱신 (Hybrid C) |

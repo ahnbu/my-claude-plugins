@@ -124,84 +124,92 @@ class SessionDB {
     let planNew = 0, planCached = 0;
     let codexNew = 0, codexCached = 0;
 
-    // ── Claude 세션 ──
-    if (fs.existsSync(this.projectsDir)) {
-      let projectDirs;
-      try { projectDirs = fs.readdirSync(this.projectsDir); } catch { projectDirs = []; }
+    this.db.exec("BEGIN");
+    try {
+      // ── Claude 세션 ──
+      if (fs.existsSync(this.projectsDir)) {
+        let projectDirs;
+        try { projectDirs = fs.readdirSync(this.projectsDir); } catch { projectDirs = []; }
 
-      for (const projectDir of projectDirs) {
-        const projectPath = path.join(this.projectsDir, projectDir);
-        try { if (!fs.statSync(projectPath).isDirectory()) continue; } catch { continue; }
+        for (const projectDir of projectDirs) {
+          const projectPath = path.join(this.projectsDir, projectDir);
+          try { if (!fs.statSync(projectPath).isDirectory()) continue; } catch { continue; }
 
+          let files;
+          try { files = fs.readdirSync(projectPath); } catch { continue; }
+
+          for (const file of files) {
+            if (!file.endsWith(".jsonl")) continue;
+            const filePath = path.join(projectPath, file);
+            const sessionId = path.basename(file, ".jsonl");
+
+            try {
+              const mtime = fs.statSync(filePath).mtimeMs;
+              if (dbMtimes.get(sessionId) === mtime) { claudeCached++; continue; }
+
+              const result = processSession(filePath);
+              if (!result || result.metadata.messageCount === 0) continue;
+              result.metadata.type = "session";
+              this._upsertSession(result.metadata, mtime);
+              this._upsertMessages(result.metadata.sessionId, result.messages);
+              claudeNew++;
+            } catch (err) {
+              if (verbose) console.warn(`⚠️  세션 파싱 실패: ${file} — ${err.message}`);
+            }
+          }
+        }
+      }
+
+      // ── Plans ──
+      // slug→sessionId 맵 빌드 (DB에서 plan_slug로 조회)
+      const slugToSessionId = this._buildSlugMap();
+
+      if (fs.existsSync(this.plansDir)) {
         let files;
-        try { files = fs.readdirSync(projectPath); } catch { continue; }
+        try { files = fs.readdirSync(this.plansDir).filter(f => f.endsWith(".md")); } catch { files = []; }
 
         for (const file of files) {
-          if (!file.endsWith(".jsonl")) continue;
-          const filePath = path.join(projectPath, file);
-          const sessionId = path.basename(file, ".jsonl");
+          const filePath = path.join(this.plansDir, file);
+          const slug = path.basename(file, ".md");
+          const cacheKey = "plan:" + slug;
 
           try {
             const mtime = fs.statSync(filePath).mtimeMs;
-            if (dbMtimes.get(sessionId) === mtime) { claudeCached++; continue; }
+            const linkedSessionId = slugToSessionId.get(slug) || slugToSessionId.get(slug.replace(/-agent-[a-f0-9]+$/, "")) || null;
 
-            const result = processSession(filePath);
-            if (!result || result.metadata.messageCount === 0) continue;
-            result.metadata.type = "session";
-            this._upsertSession(result.metadata, mtime);
-            this._upsertMessages(result.metadata.sessionId, result.messages);
-            claudeNew++;
-          } catch (err) {
-            if (verbose) console.warn(`⚠️  세션 파싱 실패: ${file} — ${err.message}`);
-          }
-        }
-      }
-    }
-
-    // ── Plans ──
-    // slug→sessionId 맵 빌드 (DB에서 plan_slug로 조회)
-    const slugToSessionId = this._buildSlugMap();
-
-    if (fs.existsSync(this.plansDir)) {
-      let files;
-      try { files = fs.readdirSync(this.plansDir).filter(f => f.endsWith(".md")); } catch { files = []; }
-
-      for (const file of files) {
-        const filePath = path.join(this.plansDir, file);
-        const slug = path.basename(file, ".md");
-        const cacheKey = "plan:" + slug;
-
-        try {
-          const mtime = fs.statSync(filePath).mtimeMs;
-          const linkedSessionId = slugToSessionId.get(slug) || slugToSessionId.get(slug.replace(/-agent-[a-f0-9]+$/, "")) || null;
-
-          if (dbMtimes.get(cacheKey) === mtime) {
-            // mtime 변경 없어도 linkedSessionId는 매번 갱신
-            if (linkedSessionId) {
-              this.db.prepare("UPDATE sessions SET linked_session_id = ? WHERE session_id = ?")
-                .run(linkedSessionId, cacheKey);
+            if (dbMtimes.get(cacheKey) === mtime) {
+              // mtime 변경 없어도 linkedSessionId는 매번 갱신
+              if (linkedSessionId) {
+                this.db.prepare("UPDATE sessions SET linked_session_id = ? WHERE session_id = ?")
+                  .run(linkedSessionId, cacheKey);
+              }
+              planCached++;
+              continue;
             }
-            planCached++;
-            continue;
-          }
 
-          const result = parsePlan(filePath);
-          if (!result) continue;
-          if (linkedSessionId) result.metadata.linkedSessionId = linkedSessionId;
-          this._upsertSession(result.metadata, mtime);
-          this._upsertPlanContent(result.metadata.sessionId, result.content);
-          planNew++;
-        } catch (err) {
-          if (verbose) console.warn(`⚠️  플랜 파싱 실패: ${file} — ${err.message}`);
+            const result = parsePlan(filePath);
+            if (!result) continue;
+            if (linkedSessionId) result.metadata.linkedSessionId = linkedSessionId;
+            this._upsertSession(result.metadata, mtime);
+            this._upsertPlanContent(result.metadata.sessionId, result.content);
+            planNew++;
+          } catch (err) {
+            if (verbose) console.warn(`⚠️  플랜 파싱 실패: ${file} — ${err.message}`);
+          }
         }
       }
-    }
 
-    // ── Codex 세션 ──
-    if (fs.existsSync(this.codexDir)) {
-      this._syncCodexDir(this.codexDir, dbMtimes, (c, n) => { codexCached += c; codexNew += n; }, verbose);
-    } else if (verbose) {
-      console.warn(`⚠️  Codex 세션 디렉토리 없음: ${this.codexDir}`);
+      // ── Codex 세션 ──
+      if (fs.existsSync(this.codexDir)) {
+        this._syncCodexDir(this.codexDir, dbMtimes, (c, n) => { codexCached += c; codexNew += n; }, verbose);
+      } else if (verbose) {
+        console.warn(`⚠️  Codex 세션 디렉토리 없음: ${this.codexDir}`);
+      }
+
+      this.db.exec("COMMIT");
+    } catch (err) {
+      this.db.exec("ROLLBACK");
+      throw err;
     }
 
     if (verbose) {
