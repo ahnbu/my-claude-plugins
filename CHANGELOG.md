@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-09 | feat | - | `my-session-dashboard`: plan 상세 세션ID에 plan slug 대신 실제 세션 UUID 표시 (`linkedSessionId` 추가) |
 | 2026-03-09 | chore | - | 루트 `dashboard-*.png` 4개 제거 |
 | 2026-03-09 | docs | - | `_docs/` 폴더 구조 재편 — 문서 이동 반영 (`_docs/공통/`으로 세션이력분석·플러그인계획 통합, `_docs/my-session-dashboard/`로 문서 이동, `_docs/문서시스템연구/`·`_docs/세션이력분석/` 폴더 제거) |
 | 2026-03-09 | chore | - | `my-cowork`, `taskmaster-cli` 플러그인 제거 — git에서 삭제 반영 |

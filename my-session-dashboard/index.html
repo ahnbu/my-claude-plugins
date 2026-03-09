@@ -1198,9 +1198,9 @@
           <span><span class="label">글자수:</span> ${(meta.charCount || 0).toLocaleString()}자</span>
           ${meta.projectDisplay ? `<span><span class="label">프로젝트:</span> ${escapeHtml(meta.projectDisplay)}</span>` : ""}
         </div>
-        ${meta.sessionId ? `<div class="file-path-row">
+        ${(meta.linkedSessionId || meta.sessionId) ? `<div class="file-path-row">
           <span class="file-path-label">세션ID:</span>
-          <span class="file-path-value" title="${escapeAttr(meta.sessionId)}">${escapeHtml(meta.sessionId)}</span><button class="copy-btn" data-path="${escapeAttr(meta.sessionId)}" onclick="copyPath(this)">복사</button>
+          <span class="file-path-value" title="${escapeAttr(meta.linkedSessionId || meta.sessionId)}">${escapeHtml(meta.linkedSessionId || meta.sessionId)}</span><button class="copy-btn" data-path="${escapeAttr(meta.linkedSessionId || meta.sessionId)}" onclick="copyPath(this)">복사</button>
         </div>` : ""}
         ${planFilePath ? `<div class="file-path-row">
           <span class="file-path-label">파일:</span>

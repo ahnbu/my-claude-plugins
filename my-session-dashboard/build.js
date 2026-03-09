@@ -551,6 +551,69 @@ function loadCodexSessions(cache, newCache) {
   return { codexResults, newCount, cachedCount };
 }
 
+// ── Slug → SessionId 맵 빌드 ──
+// 모든 JSONL 파일의 첫 10줄을 스캔해 slug → sessionId 매핑 구성
+function buildSlugToSessionMap() {
+  const map = new Map();
+  if (!fs.existsSync(PROJECTS_DIR)) return map;
+
+  let projects;
+  try { projects = fs.readdirSync(PROJECTS_DIR); } catch { return map; }
+
+  for (const projectDir of projects) {
+    const projectPath = path.join(PROJECTS_DIR, projectDir);
+    try { if (!fs.statSync(projectPath).isDirectory()) continue; } catch { continue; }
+
+    let files;
+    try { files = fs.readdirSync(projectPath); } catch { continue; }
+
+    // 메인 JSONL 스캔 (일반 slug)
+    for (const file of files) {
+      if (!file.endsWith(".jsonl")) continue;
+      const filePath = path.join(projectPath, file);
+      try {
+        const content = fs.readFileSync(filePath, "utf8");
+        const lines = content.split("\n").filter(Boolean);
+        for (let i = 0; i < Math.min(10, lines.length); i++) {
+          try {
+            const entry = JSON.parse(lines[i]);
+            if (entry.slug && entry.sessionId && !map.has(entry.slug)) {
+              map.set(entry.slug, entry.sessionId);
+              break;
+            }
+          } catch {}
+        }
+      } catch {}
+    }
+
+    // subagents 디렉토리 스캔 (agent plan slug: "<slug>-agent-<agentId>")
+    const subagentsPath = path.join(projectPath, "subagents");
+    if (!fs.existsSync(subagentsPath)) continue;
+    let subFiles;
+    try { subFiles = fs.readdirSync(subagentsPath); } catch { continue; }
+    for (const file of subFiles) {
+      if (!file.endsWith(".jsonl")) continue;
+      const filePath = path.join(subagentsPath, file);
+      try {
+        const content = fs.readFileSync(filePath, "utf8");
+        const lines = content.split("\n").filter(Boolean);
+        for (let i = 0; i < Math.min(5, lines.length); i++) {
+          try {
+            const entry = JSON.parse(lines[i]);
+            if (entry.slug && entry.sessionId && entry.agentId) {
+              const agentSlug = `${entry.slug}-agent-${entry.agentId}`;
+              if (!map.has(agentSlug)) map.set(agentSlug, entry.sessionId);
+              break;
+            }
+          } catch {}
+        }
+      } catch {}
+    }
+  }
+
+  return map;
+}
+
 // ── Plan 파싱 ──
 function parsePlan(filePath) {
   const absFilePath = path.resolve(filePath);
@@ -623,7 +686,7 @@ function parsePlan(filePath) {
   };
 }
 
-function loadPlans(cache, newCache) {
+function loadPlans(cache, newCache, slugToSessionMap) {
   const planResults = [];
   let newCount = 0;
   let cachedCount = 0;
@@ -644,8 +707,15 @@ function loadPlans(cache, newCache) {
       const stat = fs.statSync(filePath);
       const mtime = stat.mtimeMs;
 
+      // slugToSessionMap으로 linkedSessionId 결정
+      const linkedSessionId = slugToSessionMap
+        ? (slugToSessionMap.get(slug) || slugToSessionMap.get(slug.replace(/-agent-[a-f0-9]+$/, "")))
+        : undefined;
+
       if (cache[cacheKey] && cache[cacheKey].mtime === mtime) {
         const cached = cache[cacheKey];
+        // linkedSessionId는 매번 최신 맵으로 갱신 (캐시와 무관)
+        if (linkedSessionId) cached.metadata.linkedSessionId = linkedSessionId;
         planResults.push({
           metadata: cached.metadata,
           content: cached.content,
@@ -657,6 +727,7 @@ function loadPlans(cache, newCache) {
 
       const result = parsePlan(filePath);
       if (!result) continue;
+      if (linkedSessionId) result.metadata.linkedSessionId = linkedSessionId;
       planResults.push(result);
       newCache[cacheKey] = {
         mtime,
@@ -757,8 +828,11 @@ function main() {
     }
   }
 
+  // Slug → SessionId 맵 빌드 (plan linkedSessionId 연결용)
+  const slugToSessionMap = buildSlugToSessionMap();
+
   // Plans 로드
-  const { planResults, newCount: planNew, cachedCount: planCached } = loadPlans(cache, newCache);
+  const { planResults, newCount: planNew, cachedCount: planCached } = loadPlans(cache, newCache, slugToSessionMap);
 
   // Codex 세션 로드
   const { codexResults, newCount: codexNew, cachedCount: codexCached } = loadCodexSessions(cache, newCache);
