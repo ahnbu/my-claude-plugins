@@ -1065,7 +1065,7 @@
     const sessionFilePath = meta.filePath || "";
     let html = `
       <div class="detail-header">
-        <h2>${escapeHtml(meta.title)} <button class="copy-doc-btn" onclick="copyDoc(this, '${escapeAttr(meta.sessionId)}')">문서 전체 복사</button></h2>
+        <h2>${escapeHtml(meta.title)} <button class="copy-doc-btn" onclick="copyDoc(this, '${escapeAttr(meta.sessionId)}', false)">문서 복사</button> <button class="copy-doc-btn" onclick="copyDoc(this, '${escapeAttr(meta.sessionId)}', true)">문서 복사 (상세)</button></h2>
         <div class="detail-meta">
           <span><span class="label">프로젝트:</span> ${escapeHtml(meta.projectDisplay || "-")}</span>
           <span><span class="label">브랜치:</span> ${escapeHtml(meta.gitBranch || "-")}</span>
@@ -1210,7 +1210,7 @@
       : '<span class="type-badge plan">PLAN</span>';
 
     const planFilePath = meta.filePath || "";
-    const docCopyBtn = `<button class="copy-doc-btn" onclick="copyDoc(this, '${escapeAttr(meta.sessionId)}')">문서 전체 복사</button>`;
+    const docCopyBtn = `<button class="copy-doc-btn" onclick="copyDoc(this, '${escapeAttr(meta.sessionId)}', false)">문서 복사</button> <button class="copy-doc-btn" onclick="copyDoc(this, '${escapeAttr(meta.sessionId)}', true)">문서 복사 (상세)</button>`;
     let html = `
       <div class="detail-header">
         <h2><span>${escapeHtml(meta.title)}</span> ${badge} ${docCopyBtn}</h2>
@@ -1521,9 +1521,40 @@
     });
   };
 
-  window.copyDoc = function(btn, sessionId) {
+  function messagesToMarkdown(messages, detailed) {
+    return messages
+      .filter(m => m.text || (m.tools && m.tools.length > 0))
+      .map(m => {
+        let role;
+        if (m.role === "user") {
+          role = m.subtype === "meta" ? "스킬"
+               : m.subtype === "tool_result" ? "도구 응답"
+               : "User";
+        } else {
+          role = "Assistant";
+        }
+        const parts = [];
+        if (m.text) parts.push(m.text);
+        if (m.tools && m.tools.length > 0) {
+          for (const tool of m.tools) {
+            let toolLine = `> 🔧 **${tool.name}** ${toolSummary(tool)}`;
+            if (detailed && tool.input) {
+              const json = JSON.stringify(tool.input, null, 2).split("\n").join("\n> ");
+              toolLine += `\n> \`\`\`json\n> ${json}\n> \`\`\``;
+            }
+            parts.push(toolLine);
+          }
+        }
+        return `## ${role}\n\n${parts.join("\n\n")}`;
+      })
+      .join("\n\n---\n\n");
+  }
+
+  window.copyDoc = function(btn, sessionId, detailed) {
+    detailed = detailed === true;
     const content = loadConversation(sessionId);
     const meta = currentMeta || {};
+    const originalText = btn.textContent;
     let text;
 
     // 메타 헤더 생성 (Plan / 세션 공통)
@@ -1559,13 +1590,7 @@
       }
       text = `${header}\n\n---\n\n${body}`;
     } else if (Array.isArray(content)) {
-      const body = content
-        .filter(m => m.text)
-        .map(m => {
-          const role = m.role === "user" ? "User" : "Assistant";
-          return `## ${role}\n\n${m.text}`;
-        })
-        .join("\n\n---\n\n");
+      const body = messagesToMarkdown(content, detailed);
       text = `${header}\n\n---\n\n${body}`;
     } else {
       text = JSON.stringify(content, null, 2);
@@ -1574,7 +1599,7 @@
       btn.textContent = "✓ 복사됨";
       btn.classList.add("copied");
       showCopyToast("문서 복사됨");
-      setTimeout(() => { btn.textContent = "문서 전체 복사"; btn.classList.remove("copied"); }, 1800);
+      setTimeout(() => { btn.textContent = originalText; btn.classList.remove("copied"); }, 1800);
     });
   };
 
