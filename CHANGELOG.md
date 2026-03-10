@@ -10,6 +10,8 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-10 | refactor | - | `my-session-wrap/hooks/inject-plugin-guidelines.js` → `.bak` 리네임, `~/.claude/settings.json` SessionStart에서 해당 hook 제거 — plugin 미설치 운용 모드에서 배포 절차 주입 불필요 |
+| 2026-03-10 | docs | - | `CLAUDE.md` — 배포 워크플로우 섹션을 미설치 운용 모드 기준으로 재작성, 세션 DB 정본을 소스 레포 `output/`로 명시 |
 | 2026-03-10 | fix | my-session-wrap 2.9.2 | `hooks/sync-session-stop.js`, `lib/session/session-loader.js` — DB 경로 하드코딩(`os.homedir()`) → `__dirname` 상대경로로 수정: marketplace에서 로드 시 올바른 DB 경로(설치 위치 기준)를 사용하도록 버그 수정 |
 | 2026-03-10 | feat | - | `git-hooks/post-commit`, `git-hooks/auto-push-update.js` 신규 추가 — 플러그인 변경 커밋 시 `git push` + `claude plugin marketplace update` + `claude plugin update` 자동 실행; 문서 전용 커밋(`_docs/`, `_handoff/`, 루트 `.md`)은 스킵; `shared/` 변경 시 전체 플러그인 업데이트 |
 | 2026-03-10 | feat | my-session-dashboard 1.4.3 | `my-session-dashboard/index.html` — "문서 전체 복사" 버튼 → "문서 복사" + "문서 복사 (상세)" 2개로 분리: 기본은 tool 한 줄 요약(`> 🔧 도구명 summary`), 상세는 tool input JSON 전체 포함; 역할 라벨 분화(User/도구 응답/스킬/Assistant); `messagesToMarkdown(messages, detailed)` 헬퍼 추출 |

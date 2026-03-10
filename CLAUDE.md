@@ -60,6 +60,15 @@ SessionStart 훅으로 매 세션 실행. 플러그인의 `commands/` 파일을 
 
 ## 배포 워크플로우
 
+### 현행 운용 모드: Plugin 미설치 운용 (2026-03-10 전환)
+
+본인 환경에서는 plugin을 설치하지 않고 소스 레포에서 직접 실행한다.
+- hooks: `settings.json`에 소스 레포 경로를 직접 등록
+- commands/skills: `~/.claude/commands/`, `~/.claude/skills/`에 직접 배치
+- git push: post-commit hook(`auto-push-update.js`)이 자동 처리
+
+### 타인 배포 시 (참고용)
+
 ```
 이 레포 (개발 공간)                GitHub              Claude Code 런타임
 ──────────────────────────────────────────────────────────────────────
@@ -71,10 +80,7 @@ my-claude-plugins/          git push     claude plugin marketplace update
   my-session-dashboard/
 ```
 
-- **이 레포**: 개발자가 직접 편집하는 소스. `marketplace.json` 포함.
-- **`~/.claude/plugins/marketplaces/`**: 설치 경로. Claude Code가 여기서 hooks/commands/skills를 로드. **직접 수정 금지** (다음 update 시 덮어씌워짐).
-
-### 배포 CLI 명령 (AI가 직접 실행 가능)
+배포 CLI 명령:
 
 ```bash
 # 1. 마켓플레이스 최신 코드 pull (GitHub → 설치 경로)
@@ -84,7 +90,10 @@ CLAUDECODE="" claude plugin marketplace update my-claude-plugins
 CLAUDECODE="" claude plugin update <plugin-name>@my-claude-plugins
 ```
 
-> TUI `/plugin update`와 동일한 동작. AI가 Bash 도구로 직접 실행할 수 있다.
+### 세션 DB 경로 원칙
+
+- **소스 레포 DB** (정본): `output/session-dashboard/sessions.db` — 모든 훅·커맨드·스킬이 런타임에 읽고 쓰는 대상
+- DB 경로 결정: `__dirname` 기준 상대경로로 해결. 절대경로 하드코딩 금지.
 
 ## 문서 파일 이름 규칙
 
