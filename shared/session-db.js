@@ -10,6 +10,7 @@ const {
   processSession,
   processCodexSession,
   parsePlan,
+  normalizeCodexEntries,
   normalizeEntries,
   readJsonl,
 } = require("./session-parser.js");
@@ -445,7 +446,28 @@ class SessionDB {
     const row = this.db.prepare("SELECT COUNT(*) AS c FROM events WHERE session_id = ?").get(sessionId);
     if (row.c > 0 && !options.force) return;
 
-    // 파일 경로 결정
+    // Codex 세션 분기
+    if (sessionId.startsWith("codex:")) {
+      const rawId = sessionId.slice("codex:".length);
+
+      // 파일 경로 결정 (DB 우선, 없으면 codexDir DFS 탐색)
+      let filePath = null;
+      const sessionRow = this.db.prepare("SELECT file_path FROM sessions WHERE session_id = ?").get(sessionId);
+      if (sessionRow && sessionRow.file_path && fs.existsSync(sessionRow.file_path)) {
+        filePath = sessionRow.file_path;
+      } else {
+        const codexDir = options.codexDir || this.codexDir;
+        filePath = _findCodexSessionFile(rawId, codexDir);
+        if (!filePath) throw new Error(`Codex session file not found: ${sessionId}`);
+      }
+
+      const entries = readJsonl(filePath);
+      const events = normalizeCodexEntries(entries, "main", "");
+      this._upsertEvents(sessionId, "", events);
+      return;
+    }
+
+    // Claude 세션 처리
     let mainFilePath = null;
     const sessionRow = this.db.prepare("SELECT file_path FROM sessions WHERE session_id = ?").get(sessionId);
     if (sessionRow && sessionRow.file_path && fs.existsSync(sessionRow.file_path)) {
@@ -498,6 +520,23 @@ class SessionDB {
   close() {
     try { this.db.close(); } catch {}
   }
+}
+
+/** DFS로 Codex 세션 파일 탐색 (파일명에 rawId 포함 여부로 매칭) */
+function _findCodexSessionFile(rawId, rootDir) {
+  if (!fs.existsSync(rootDir)) return null;
+  const stack = [rootDir];
+  while (stack.length > 0) {
+    const dir = stack.pop();
+    let entries;
+    try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { continue; }
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) { stack.push(fullPath); continue; }
+      if (entry.isFile() && entry.name.endsWith(".jsonl") && entry.name.includes(rawId)) return fullPath;
+    }
+  }
+  return null;
 }
 
 /** DFS로 sessionId.jsonl 탐색 */

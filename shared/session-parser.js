@@ -669,6 +669,80 @@ function pushProgressEvents(events, entry, source, agentId) {
   }
 }
 
+function normalizeCodexEntries(entries, source, agentId) {
+  const events = [];
+
+  for (const entry of entries) {
+    if (!entry || !entry.timestamp) continue;
+    const timestamp = entry.timestamp;
+    const timestampMs = parseTimestamp(timestamp);
+
+    if (entry.type === "event_msg") {
+      const ep = entry.payload || {};
+      if (ep.type === "user_message" && ep.message) {
+        events.push({
+          agentId,
+          kind: "user_text",
+          source,
+          text: ep.message,
+          timestamp,
+          timestampMs,
+        });
+      }
+      continue;
+    }
+
+    if (entry.type === "response_item") {
+      const ep = entry.payload || {};
+      const pType = ep.type;
+
+      if (pType === "message" && ep.role === "assistant") {
+        let text = "";
+        if (Array.isArray(ep.content)) {
+          text = ep.content
+            .filter((c) => c.type === "output_text")
+            .map((c) => c.text || "")
+            .join("\n");
+        }
+        if (text) {
+          events.push({
+            agentId,
+            kind: "assistant_text",
+            source,
+            text,
+            timestamp,
+            timestampMs,
+          });
+        }
+        continue;
+      }
+
+      if (pType === "function_call" || pType === "custom_tool_call") {
+        const toolName = ep.name || "unknown";
+        let input = {};
+        if (pType === "function_call") {
+          try { input = ep.arguments ? JSON.parse(ep.arguments) : {}; } catch { input = { raw: ep.arguments }; }
+        } else {
+          input = ep.input !== undefined ? ep.input : {};
+        }
+        events.push({
+          agentId,
+          input,
+          kind: "tool_use",
+          source,
+          timestamp,
+          timestampMs,
+          toolName,
+          toolUseId: ep.call_id || ep.id || "",
+        });
+        continue;
+      }
+    }
+  }
+
+  return events.sort((left, right) => left.timestampMs - right.timestampMs);
+}
+
 function normalizeEntries(entries, source, agentId) {
   const events = [];
 
@@ -704,6 +778,7 @@ module.exports = {
   findCwd,
   formatTimestamp,
   getTextFromMessage,
+  normalizeCodexEntries,
   normalizeEntries,
   normalizeProjectPath,
   parsePlan,
