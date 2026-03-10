@@ -1112,7 +1112,18 @@
 
       const roleLabel = msg.role === "user"
         ? (msg.subtype === "meta" ? "스킬"
-          : msg.subtype === "tool_result" ? "도구 응답"
+          : msg.subtype === "tool_result" ? (() => {
+              if (!msg.tools || msg.tools.length === 0) return "도구 응답";
+              const HINT_KEY = { Read: "file_path", Bash: "command", Glob: "pattern",
+                Grep: "pattern", Edit: "file_path", Write: "file_path" };
+              const parts = msg.tools.map(t => {
+                const key = HINT_KEY[t.name];
+                const val = t.input && (key ? t.input[key] : Object.values(t.input)[0]);
+                const hint = (val && typeof val === "string") ? " › " + val.substring(0, 35) : "";
+                return t.name + hint;
+              });
+              return "도구 응답 · " + parts.join(", ");
+            })()
           : "사용자")
         : ROLE_LABELS[msg.role] || msg.role;
       const roleBadgeClass = msg.role === "user"

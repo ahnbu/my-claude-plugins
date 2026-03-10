@@ -238,6 +238,7 @@ function processSession(filePath) {
   let toolUseCount = 0;
   const models = new Set();
   const toolNames = {};
+  const toolUseIdMap = {};
   const messages = [];
 
   // plan_slug: 세션이 어떤 플랜에서 시작됐는지 (linkedSessionId 연결용)
@@ -268,16 +269,20 @@ function processSession(filePath) {
       }
 
       // 메시지 분류 (대시보드 역할 라벨 분화용)
+      const isToolResult = Array.isArray(content) && content.some(b => b.type === "tool_result");
       const subtype = entry.isMeta ? "meta"
-        : (Array.isArray(content) && content.some(b => b.type === "tool_result")) ? "tool_result"
+        : isToolResult ? "tool_result"
         : "user_input";
 
-      messages.push({
-        role: "user",
-        subtype,
-        text: cleanText,
-        timestamp: entry.timestamp,
-      });
+      const msgObj = { role: "user", subtype, text: cleanText, timestamp: entry.timestamp };
+      if (isToolResult) {
+        const trTools = content
+          .filter(b => b.type === "tool_result" && b.tool_use_id)
+          .map(b => toolUseIdMap[b.tool_use_id])
+          .filter(Boolean);
+        if (trTools.length > 0) msgObj.tools = trTools;
+      }
+      messages.push(msgObj);
     } else if (entry.type === "assistant" && entry.message) {
       const msg = entry.message;
       if (msg.model) models.add(msg.model);
@@ -299,6 +304,7 @@ function processSession(filePath) {
             const name = block.name || "unknown";
             toolNames[name] = (toolNames[name] || 0) + 1;
             tools.push({ name, input: block.input });
+            if (block.id) toolUseIdMap[block.id] = { name, input: block.input };
           } else if (block.type === "thinking" && block.thinking) {
             textParts.push(`[thinking] ${block.thinking}`);
           }
