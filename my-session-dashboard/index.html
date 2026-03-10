@@ -437,6 +437,8 @@
 
   .role-badge.user { background: #1f6feb44; color: var(--accent); }
   .role-badge.assistant { background: #3fb95033; color: var(--success); }
+  .role-badge.meta { background: #8b5cf644; color: #a78bfa; }
+  .role-badge.tool-result { background: #f59e0b33; color: #fbbf24; }
 
   .message-time {
     font-size: 11px;
@@ -1017,7 +1019,7 @@
 
         const metaInfo = isPlan
           ? `<span>${s.charCount || 0}자</span>`
-          : `<span>${s.userTextMessageCount || 0} 메시지</span><span>${s.toolUseCount || 0} 도구</span>`;
+          : `<span>${s.userTextMessageCount || 0} 메시지</span>`;
 
         return `
           <div class="${itemClass}"
@@ -1108,7 +1110,16 @@
           })
         : "";
 
-      const roleLabel = ROLE_LABELS[msg.role] || msg.role;
+      const roleLabel = msg.role === "user"
+        ? (msg.subtype === "meta" ? "스킬"
+          : msg.subtype === "tool_result" ? "도구 응답"
+          : "사용자")
+        : ROLE_LABELS[msg.role] || msg.role;
+      const roleBadgeClass = msg.role === "user"
+        ? (msg.subtype === "meta" ? "meta"
+          : msg.subtype === "tool_result" ? "tool-result"
+          : "user")
+        : msg.role;
       const msgId = `msg-${msgIndex}`;
 
       // 목차 항목 수집: user는 항상, assistant는 user 간 그룹에서 대표 1개만
@@ -1132,7 +1143,7 @@
       html += `
         <div class="message ${msg.role}" id="${msgId}">
           <div class="message-header">
-            <span class="role-badge ${msg.role}">${roleLabel}</span>
+            <span class="role-badge ${roleBadgeClass}">${roleLabel}</span>
             <span class="message-time">${time}</span>
           </div>
       `;

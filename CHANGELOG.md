@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-10 | feat | - | `my-session-dashboard/index.html` — 대화 뷰어 역할 라벨 분화: user subtype별 "사용자"/"스킬"/"도구 응답" 배지 + CSS 추가; 사이드바 "도구" 수 표시 제거 |
 | 2026-03-10 | fix | - | `shared/text-utils.js` — `stripSystemTags`에 `task-notification` 태그 추가; `shared/session-parser.js` — `userTextMessageCount` 과다 카운트 수정: `isMeta` 엔트리 제외 + `subtype` 분류 필드(`user_input`/`meta`/`tool_result`) 추가 |
 | 2026-03-10 | docs | - | `20260310_세션_메트릭_분리_리네이밍.md`, `_docs/20260310_message_count_...계획.md`, `_docs/20260310_syncSingleSession_Codex_지원하도록_개선.md` — 메트릭 분리 계획 문서 및 이전 세션 Codex syncSingleSession 개선 문서 추가 |
 | 2026-03-10 | feat | - | `my-session-dashboard/index.html` — 세션 목록 "메시지" 수 표시를 `userTextMessageCount` 기준으로 전환 (tool_result만 있는 엔트리 제외) |
