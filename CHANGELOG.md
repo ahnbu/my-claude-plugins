@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-10 | feat | - | `git-hooks/post-commit`, `git-hooks/auto-push-update.js` 신규 추가 — 플러그인 변경 커밋 시 `git push` + `claude plugin marketplace update` + `claude plugin update` 자동 실행; 문서 전용 커밋(`_docs/`, `_handoff/`, 루트 `.md`)은 스킵; `shared/` 변경 시 전체 플러그인 업데이트 |
 | 2026-03-10 | feat | my-session-dashboard 1.4.2 | `shared/session-parser.js` + `my-session-dashboard/index.html` — "도구 응답" 배지에 도구 이름·주요 인자 힌트 추가: `toolUseIdMap`으로 tool_use_id → name/input 매핑, 렌더러에서 `"도구 응답 · Read › /path"` 형태 표시 |
 | 2026-03-10 | fix | my-session-dashboard 1.4.1 | `shared/session-db.js` — `messages` 테이블에 `subtype` 컬럼 추가: 스키마·INSERT·SELECT 3곳 수정 + ALTER TABLE 마이그레이션 → 대시보드 역할 라벨 분화("사용자"/"스킬"/"도구 응답") 누락 수정 |
 | 2026-03-10 | feat | - | `my-session-dashboard/index.html` — 대화 뷰어 역할 라벨 분화: user subtype별 "사용자"/"스킬"/"도구 응답" 배지 + CSS 추가; 사이드바 "도구" 수 표시 제거 |
