@@ -13,11 +13,11 @@ function stripSystemTags(text) {
   if (!text) return "";
   return text
     .replace(
-      /<(command-message|command-name|command-args|local-command-caveat|ide_opened_file|system-reminder|user-prompt-submit-hook|antml:\w+)[^>]*>[\s\S]*?<\/\1>/gi,
+      /<(command-message|command-name|command-args|local-command-caveat|ide_opened_file|system-reminder|user-prompt-submit-hook|task-notification|antml:\w+)[^>]*>[\s\S]*?<\/\1>/gi,
       ""
     )
     .replace(
-      /<\/?(command-message|command-name|command-args|local-command-caveat|ide_opened_file|system-reminder|user-prompt-submit-hook|antml:\w+)[^>]*>/gi,
+      /<\/?(command-message|command-name|command-args|local-command-caveat|ide_opened_file|system-reminder|user-prompt-submit-hook|task-notification|antml:\w+)[^>]*>/gi,
       ""
     )
     .trim();

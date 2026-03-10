@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-10 | fix | - | `shared/text-utils.js` — `stripSystemTags`에 `task-notification` 태그 추가; `shared/session-parser.js` — `userTextMessageCount` 과다 카운트 수정: `isMeta` 엔트리 제외 + `subtype` 분류 필드(`user_input`/`meta`/`tool_result`) 추가 |
 | 2026-03-10 | docs | - | `20260310_세션_메트릭_분리_리네이밍.md`, `_docs/20260310_message_count_...계획.md`, `_docs/20260310_syncSingleSession_Codex_지원하도록_개선.md` — 메트릭 분리 계획 문서 및 이전 세션 Codex syncSingleSession 개선 문서 추가 |
 | 2026-03-10 | feat | - | `my-session-dashboard/index.html` — 세션 목록 "메시지" 수 표시를 `userTextMessageCount` 기준으로 전환 (tool_result만 있는 엔트리 제외) |
 | 2026-03-10 | feat | - | `shared/session-parser.js`, `shared/session-db.js` — `message_count` → `user_entry_count` 리네이밍 + 신규 메트릭 `user_text_message_count`(실제 텍스트 입력 수), `tool_result_count`(block 수) 추가; DB 자동 마이그레이션(RENAME COLUMN + mtime=0 강제 재동기화) |

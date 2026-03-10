@@ -259,15 +259,22 @@ function processSession(filePath) {
         toolResultCount += content.filter(b => b.type === "tool_result").length;
       }
 
-      // 실제 사용자 텍스트 판정
+      // 실제 사용자 텍스트 판정: isMeta 제외 (스킬 확장 프롬프트는 시스템 자동 주입)
       const rawText = getTextFromMessage(entry.message);
       const cleanText = stripSystemTags(rawText);
-      if (cleanText.trim()) {
+      const isUserText = !entry.isMeta && cleanText.trim();
+      if (isUserText) {
         userTextMessageCount++;
       }
 
+      // 메시지 분류 (대시보드 역할 라벨 분화용)
+      const subtype = entry.isMeta ? "meta"
+        : (Array.isArray(content) && content.some(b => b.type === "tool_result")) ? "tool_result"
+        : "user_input";
+
       messages.push({
         role: "user",
+        subtype,
         text: cleanText,
         timestamp: entry.timestamp,
       });
@@ -400,6 +407,7 @@ function processCodexSession(filePath) {
       if (ep.type === "user_message" && ep.message) {
         messages.push({
           role: "user",
+          subtype: "user_input",
           text: stripSystemTags(ep.message),
           timestamp: ts,
         });
