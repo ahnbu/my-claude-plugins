@@ -78,12 +78,16 @@ class SessionDB {
         session_id  TEXT NOT NULL,
         seq         INTEGER NOT NULL,
         role        TEXT NOT NULL,
+        subtype     TEXT,
         text        TEXT,
         timestamp   TEXT,
         tools       TEXT,
         PRIMARY KEY (session_id, seq)
       )
     `);
+    try {
+      this.db.exec("ALTER TABLE messages ADD COLUMN subtype TEXT");
+    } catch (_) { /* 이미 존재 */ }
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS plan_contents (
         session_id TEXT PRIMARY KEY,
@@ -337,7 +341,7 @@ class SessionDB {
   _upsertMessages(sessionId, messages) {
     this.db.prepare("DELETE FROM messages WHERE session_id = ?").run(sessionId);
     const stmt = this.db.prepare(
-      "INSERT INTO messages (session_id, seq, role, text, timestamp, tools) VALUES (?, ?, ?, ?, ?, ?)"
+      "INSERT INTO messages (session_id, seq, role, subtype, text, timestamp, tools) VALUES (?, ?, ?, ?, ?, ?, ?)"
     );
     for (let i = 0; i < messages.length; i++) {
       const msg = messages[i];
@@ -345,6 +349,7 @@ class SessionDB {
         sessionId,
         i,
         msg.role,
+        msg.subtype || null,
         msg.text || null,
         msg.timestamp || null,
         msg.tools ? JSON.stringify(msg.tools) : null
@@ -414,10 +419,11 @@ class SessionDB {
    */
   getMessages(sessionId) {
     const rows = this.db.prepare(
-      "SELECT role, text, timestamp, tools FROM messages WHERE session_id = ? ORDER BY seq"
+      "SELECT role, subtype, text, timestamp, tools FROM messages WHERE session_id = ? ORDER BY seq"
     ).all(sessionId);
     return rows.map(row => {
       const msg = { role: row.role };
+      if (row.subtype) msg.subtype = row.subtype;
       if (row.text) msg.text = row.text;
       if (row.timestamp) msg.timestamp = row.timestamp;
       if (row.tools) msg.tools = JSON.parse(row.tools);
