@@ -1017,7 +1017,7 @@
 
         const metaInfo = isPlan
           ? `<span>${s.charCount || 0}자</span>`
-          : `<span>${s.messageCount || 0} 메시지</span><span>${s.toolUseCount || 0} 도구</span>`;
+          : `<span>${s.userTextMessageCount || 0} 메시지</span><span>${s.toolUseCount || 0} 도구</span>`;
 
         return `
           <div class="${itemClass}"
