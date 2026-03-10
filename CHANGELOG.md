@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-10 | refactor | - | `git-hooks/auto-push-update.js`, `git-hooks/post-commit` → `.bak` 리네임 — plugin 미설치 운용 모드에서 배포 자동화 불필요, 배포 시 복원용으로 보존 |
 | 2026-03-10 | refactor | - | `my-session-wrap/hooks/inject-plugin-guidelines.js` → `.bak` 리네임, `~/.claude/settings.json` SessionStart에서 해당 hook 제거 — plugin 미설치 운용 모드에서 배포 절차 주입 불필요 |
 | 2026-03-10 | docs | - | `CLAUDE.md` — 배포 워크플로우 섹션을 미설치 운용 모드 기준으로 재작성, 세션 DB 정본을 소스 레포 `output/`로 명시 |
 | 2026-03-10 | fix | my-session-wrap 2.9.2 | `hooks/sync-session-stop.js`, `lib/session/session-loader.js` — DB 경로 하드코딩(`os.homedir()`) → `__dirname` 상대경로로 수정: marketplace에서 로드 시 올바른 DB 경로(설치 위치 기준)를 사용하도록 버그 수정 |

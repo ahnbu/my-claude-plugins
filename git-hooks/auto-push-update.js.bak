@@ -97,17 +97,14 @@ function run(cmd, opts = {}) {
 
 // 1. git push
 if (!run("git push")) {
-  console.error("[post-commit] push 실패 — plugin update 스킵");
+  console.error("[post-commit] push 실패");
   process.exit(0);
 }
 
-// 2. marketplace update
-run('CLAUDECODE="" claude plugin marketplace update my-claude-plugins');
-
-// 3. 플러그인별 update
-for (const name of pluginsToUpdate) {
-  run(`CLAUDECODE="" claude plugin update ${name}@my-claude-plugins`);
-}
-
-console.log("[post-commit] 완료");
+// NOTE: plugin 미설치 운용 모드 (2026-03-10)
+// 본인 환경에서는 plugin 미설치 상태로 사용하므로 marketplace update/plugin update 단계 스킵.
+// 타인 배포 시에는 수동으로 실행할 것:
+//   CLAUDECODE="" claude plugin marketplace update my-claude-plugins
+//   CLAUDECODE="" claude plugin update <plugin-name>@my-claude-plugins
+console.log("[post-commit] 완료 (plugin update 스킵 — 미설치 운용 모드)");
 process.exit(0);
