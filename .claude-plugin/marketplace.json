@@ -13,12 +13,6 @@
       "description": "Claude Code 대화 세션을 시각적으로 탐색하는 대시보드",
       "source": "./my-session-dashboard",
       "version": "1.4.3"
-    },
-    {
-      "name": "my-session-id",
-      "description": "세션 ID 캡처 및 훅 이벤트별 비교 플러그인",
-      "source": "./my-session-id",
-      "version": "1.0.0"
     }
   ]
 }
