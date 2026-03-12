@@ -1,7 +1,0 @@
-{
-  "name": "my-session-id",
-  "version": "1.0.0",
-  "description": "세션 ID 캡처 및 훅 이벤트별 비교 플러그인",
-  "author": { "name": "personal" },
-  "license": "MIT"
-}

@@ -1,0 +1,2 @@
+#!/bin/sh
+node "$(dirname "$0")/check-version-sync.js"
