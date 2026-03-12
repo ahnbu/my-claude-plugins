@@ -295,6 +295,7 @@ node shared/query-sessions.js by-project "my-claude-plugins"
 
 | 날짜 | 카테고리 | 변경 내용 | 관련 커밋 |
 |------|---------|---------|----------|
+| 2026-03-12 | 동기화 | `_syncGeminiDir()` — 자동 호출 세션 필터 확장: (claude) 태그도 감지 대상에 추가 (`(codex\|claude)` 정규식 통합) | — |
 | 2026-03-12 | 동기화 | `_syncGeminiDir()` — Codex 자동 호출 세션 제외 필터 추가: (codex) 태그 감지 + 60초 미만 지속시간 스킵 | — |
 | 2026-03-12 | 스키마·파일 맵·CLI·동기화 | Gemini 세션 통합 (파서·DB·쿼리·빌드), `idx_sessions_file_path` 추가 | — |
 | 2026-03-12 | — | 최초 작성 | `898637f` |
