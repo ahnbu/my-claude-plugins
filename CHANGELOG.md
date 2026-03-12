@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-12 | docs | - | `_docs/20260312_Gemini_세션_DB_통합_구현결과.md` — Gemini 통합 구현 결과 doc-save: 파서 구조·검증 결과·의사결정·미해결 이슈·plan 원문 포함 |
 | 2026-03-12 | docs | - | `SESSION-DB.md` — 작성일·기준 커밋 메타, 변경 이력 표(섹션 8) 추가; `CLAUDE.md` — 세션 DB 변경 시 SESSION-DB.md 갱신 규칙 추가 |
 | 2026-03-12 | docs | - | `SESSION-DB.md` — 세션 DB 레퍼런스 최초 작성 (스키마·데이터 흐름·파일 맵·CLI API·확장 가이드) |
 | 2026-03-12 | feat | - | `shared/session-parser.js` — `processGeminiSession()`, `normalizeGeminiEntries()` 추가: Gemini CLI `session-*.json` 파싱, thoughts/toolCalls 정규화, 토큰 합산(`input+cached+tool`, `output+thoughts`) |
