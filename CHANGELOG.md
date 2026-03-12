@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-12 | docs | - | `20260312_wrap_스킬_통합_리팩터링_구현계획.md` — wrap 스킬 통합 리팩터링 의사결정 기록 (대안 비교·검증 결과 포함) |
 | 2026-03-12 | refactor | my-session-wrap | `SKILL.md` 통합 리팩터링 — name: wrap, Step 0 런타임 감지(detect-runtime.ps1), 세션 ID 3분기(Claude/Codex/Gemini), bash/pwsh 스크립트 통합 호출, 관심사별 커밋 사이클 공통 적용; `next-handoff.ps1` 추가(Codex에서 이식); `template.md` 플레이스홀더 통일; `commands/wrap.md` 참조명 my-session-wrap→wrap |
 | 2026-03-12 | fix | - | `shared/session-db.js` — Gemini 자동 호출 세션 필터 확장: (claude) 태그도 제외 대상에 추가 (`(codex\|claude)` 정규식으로 통합) |
 | 2026-03-12 | fix | - | `shared/session-db.js` — Gemini 자동 호출 세션 제외: (codex) 태그 + 60초 미만 필터 추가. 82→54개 (28개 자동 호출 세션 제거) |
