@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-12 | docs | - | `_docs/20260312_SESSION-DB_레퍼런스_문서화_및_버전관리_체계_구축.md` — 세션DB 레퍼런스 작성·버전관리 3가지 방법 비교·pre-commit 훅 구현 결과 doc-save |
 | 2026-03-12 | chore | - | `git-hooks/pre-commit` 복원 + `check-session-db-doc.js` 추가 — CHANGELOG 강제·SESSION-DB.md 변경 이력 강제·버전 동기화 3단계 검증 |
 | 2026-03-12 | docs | - | `_docs/20260312_Gemini_세션_DB_통합_구현결과.md` — Gemini 통합 구현 결과 doc-save: 파서 구조·검증 결과·의사결정·미해결 이슈·plan 원문 포함 |
 | 2026-03-12 | docs | - | `SESSION-DB.md` — 작성일·기준 커밋 메타, 변경 이력 표(섹션 8) 추가; `CLAUDE.md` — 세션 DB 변경 시 SESSION-DB.md 갱신 규칙 추가 |
