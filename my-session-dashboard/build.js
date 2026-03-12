@@ -34,7 +34,7 @@ function main() {
   const stats = db.sync({ verbose: true });
 
   // 변경 없고 HTML 이미 존재하면 rebuild 생략
-  const totalNew = stats.claudeNew + stats.planNew + stats.codexNew;
+  const totalNew = stats.claudeNew + stats.planNew + stats.codexNew + (stats.geminiNew || 0);
   if (totalNew === 0 && fs.existsSync(htmlDest)) {
     db.close();
     console.log("✅ 변경 없음 — 기존 HTML 유지");
@@ -71,7 +71,7 @@ window.__SESSIONS_DATA__ = ${dataJson};
 
   db.close();
 
-  console.log(`✅ Claude ${stats.claudeNew}개 신규 | ${stats.claudeCached}개 캐시 | 플랜 ${stats.planNew}개 신규 | Codex ${stats.codexNew}개 신규`);
+  console.log(`✅ Claude ${stats.claudeNew}개 신규 | ${stats.claudeCached}개 캐시 | 플랜 ${stats.planNew}개 신규 | Codex ${stats.codexNew}개 신규 | Gemini ${stats.geminiNew || 0}개 신규`);
   console.log(`📊 총 ${allMeta.length}개 항목`);
   console.log(`📁 출력: ${htmlDest}`);
   console.log(`\n🌐 브라우저에서 열기: ${htmlDest}`);

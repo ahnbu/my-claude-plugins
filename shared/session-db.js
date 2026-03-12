@@ -9,9 +9,11 @@ const { DatabaseSync } = require("node:sqlite");
 const {
   processSession,
   processCodexSession,
+  processGeminiSession,
   parsePlan,
   normalizeCodexEntries,
   normalizeEntries,
+  normalizeGeminiEntries,
   readJsonl,
 } = require("./session-parser.js");
 
@@ -19,6 +21,7 @@ const HOME = process.env.HOME || process.env.USERPROFILE;
 const DEFAULT_PROJECTS_DIR = path.join(HOME, ".claude", "projects");
 const DEFAULT_PLANS_DIR = path.join(HOME, ".claude", "plans");
 const DEFAULT_CODEX_DIR = path.join(HOME, ".codex", "sessions");
+const DEFAULT_GEMINI_DIR = path.join(HOME, ".gemini", "tmp");
 
 class SessionDB {
   /**
@@ -33,6 +36,7 @@ class SessionDB {
     this.projectsDir = options.projectsDir || DEFAULT_PROJECTS_DIR;
     this.plansDir = options.plansDir || DEFAULT_PLANS_DIR;
     this.codexDir = options.codexDir || DEFAULT_CODEX_DIR;
+    this.geminiDir = options.geminiDir || DEFAULT_GEMINI_DIR;
 
     fs.mkdirSync(path.dirname(dbPath), { recursive: true });
     this.db = new DatabaseSync(dbPath);
@@ -110,6 +114,7 @@ class SessionDB {
     this.db.exec("CREATE INDEX IF NOT EXISTS idx_sessions_timestamp ON sessions(timestamp)");
     this.db.exec("CREATE INDEX IF NOT EXISTS idx_events_session ON events(session_id)");
     this.db.exec("CREATE INDEX IF NOT EXISTS idx_sessions_plan_slug ON sessions(plan_slug)");
+    this.db.exec("CREATE INDEX IF NOT EXISTS idx_sessions_file_path ON sessions(file_path)");
 
     // 마이그레이션: message_count → user_entry_count + 신규 컬럼 추가
     const cols = this.db.prepare("PRAGMA table_info(sessions)").all().map(c => c.name);
@@ -130,7 +135,7 @@ class SessionDB {
    * 전체 증분 동기화 — 소스 파일 변경 분만 DB에 upsert
    * @param {object} [options]
    * @param {boolean} [options.verbose=true]
-   * @returns {{ claudeNew, claudeCached, planNew, planCached, codexNew, codexCached }}
+   * @returns {{ claudeNew, claudeCached, planNew, planCached, codexNew, codexCached, geminiNew, geminiCached }}
    */
   sync(options = {}) {
     const verbose = options.verbose !== false;
@@ -144,6 +149,7 @@ class SessionDB {
     let claudeNew = 0, claudeCached = 0;
     let planNew = 0, planCached = 0;
     let codexNew = 0, codexCached = 0;
+    let geminiNew = 0, geminiCached = 0;
 
     this.db.exec("BEGIN");
     try {
@@ -227,6 +233,11 @@ class SessionDB {
         console.warn(`⚠️  Codex 세션 디렉토리 없음: ${this.codexDir}`);
       }
 
+      // ── Gemini 세션 ──
+      if (fs.existsSync(this.geminiDir)) {
+        this._syncGeminiDir(this.geminiDir, dbMtimes, (c, n) => { geminiCached += c; geminiNew += n; }, verbose);
+      }
+
       this.db.exec("COMMIT");
     } catch (err) {
       this.db.exec("ROLLBACK");
@@ -234,10 +245,10 @@ class SessionDB {
     }
 
     if (verbose) {
-      console.log(`  Claude: 신규 ${claudeNew}, 캐시 ${claudeCached} | 플랜: 신규 ${planNew}, 캐시 ${planCached} | Codex: 신규 ${codexNew}, 캐시 ${codexCached}`);
+      console.log(`  Claude: 신규 ${claudeNew}, 캐시 ${claudeCached} | 플랜: 신규 ${planNew}, 캐시 ${planCached} | Codex: 신규 ${codexNew}, 캐시 ${codexCached} | Gemini: 신규 ${geminiNew}, 캐시 ${geminiCached}`);
     }
 
-    return { claudeNew, claudeCached, planNew, planCached, codexNew, codexCached };
+    return { claudeNew, claudeCached, planNew, planCached, codexNew, codexCached, geminiNew, geminiCached };
   }
 
   _syncCodexDir(codexDir, dbMtimes, countCb, verbose) {
@@ -287,6 +298,56 @@ class SessionDB {
         }
       }
     }
+  }
+
+  _syncGeminiDir(geminiDir, dbMtimes, countCb, verbose) {
+    let projectDirs;
+    try { projectDirs = fs.readdirSync(geminiDir); } catch { return; }
+
+    for (const projectAlias of projectDirs) {
+      const projectPath = path.join(geminiDir, projectAlias);
+      try { if (!fs.statSync(projectPath).isDirectory()) continue; } catch { continue; }
+
+      // .project_root에서 실제 경로 읽기
+      let projectRoot = "";
+      const projectRootFile = path.join(projectPath, ".project_root");
+      if (fs.existsSync(projectRootFile)) {
+        try { projectRoot = fs.readFileSync(projectRootFile, "utf8").trim(); } catch {}
+      }
+
+      const chatsDir = path.join(projectPath, "chats");
+      if (!fs.existsSync(chatsDir)) continue;
+
+      let files;
+      try { files = fs.readdirSync(chatsDir).filter(f => f.startsWith("session-") && f.endsWith(".json")).sort(); } catch { continue; }
+
+      for (const file of files) {
+        const absPath = path.join(chatsDir, file);
+
+        try {
+          const mtime = fs.statSync(absPath).mtimeMs;
+          const existing = this._findSessionByFilePath(absPath);
+
+          if (existing && dbMtimes.get(existing.session_id) === mtime) {
+            countCb(1, 0);
+            continue;
+          }
+
+          const result = processGeminiSession(absPath, projectRoot);
+          if (!result || result.metadata.userEntryCount === 0) continue;
+          this._upsertSession(result.metadata, mtime);
+          this._upsertMessages(result.metadata.sessionId, result.messages);
+          countCb(0, 1);
+        } catch (err) {
+          if (verbose) console.warn(`⚠️  Gemini 파싱 실패: ${file} — ${err.message}`);
+        }
+      }
+    }
+  }
+
+  _findSessionByFilePath(absPath) {
+    const row = this.db.prepare("SELECT session_id, mtime FROM sessions WHERE file_path = ?").get(absPath);
+    return row || null;
   }
 
   /** plan_slug 기반 slug→sessionId 맵 (DB 조회) */
@@ -472,6 +533,21 @@ class SessionDB {
   syncSingleSession(sessionId, options = {}) {
     const row = this.db.prepare("SELECT COUNT(*) AS c FROM events WHERE session_id = ?").get(sessionId);
     if (row.c > 0 && !options.force) return;
+
+    // Gemini 세션 분기
+    if (sessionId.startsWith("gemini:")) {
+      const sessionRow = this.db.prepare("SELECT file_path FROM sessions WHERE session_id = ?").get(sessionId);
+      if (!sessionRow || !sessionRow.file_path || !fs.existsSync(sessionRow.file_path)) {
+        throw new Error(`Gemini session file not found: ${sessionId}`);
+      }
+      let rawData;
+      try { rawData = JSON.parse(fs.readFileSync(sessionRow.file_path, "utf8")); } catch (err) {
+        throw new Error(`Gemini JSON 파싱 실패: ${err.message}`);
+      }
+      const events = normalizeGeminiEntries(rawData.messages || []);
+      this._upsertEvents(sessionId, "", events);
+      return;
+    }
 
     // Codex 세션 분기
     if (sessionId.startsWith("codex:")) {

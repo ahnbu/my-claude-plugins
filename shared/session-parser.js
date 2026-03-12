@@ -810,6 +810,181 @@ function normalizeEntries(entries, source, agentId) {
   return events.sort((left, right) => left.timestampMs - right.timestampMs);
 }
 
+// ── Gemini 세션 파싱 ──
+function processGeminiSession(filePath, projectRoot) {
+  const absFilePath = path.resolve(filePath);
+  let data;
+  try {
+    data = JSON.parse(fs.readFileSync(filePath, "utf8"));
+  } catch (err) {
+    console.warn(`⚠️  Gemini JSON 파싱 실패: ${filePath} — ${err.message}`);
+    return null;
+  }
+
+  const rawSessionId = data.sessionId;
+  if (!rawSessionId) return null;
+  const sessionId = "gemini:" + rawSessionId;
+
+  const timestamp = data.startTime;
+  if (!timestamp || isNaN(new Date(timestamp).getTime())) return null;
+  const lastTimestamp = data.lastUpdated || timestamp;
+
+  const messages = data.messages || [];
+
+  // 빈 세션 (user 메시지 없음) 건너뜀
+  const userMessages = messages.filter(m => m.type === "user");
+  if (userMessages.length === 0) return null;
+
+  // 모델 수집
+  const modelSet = new Set();
+  for (const msg of messages) {
+    if (msg.type === "gemini" && msg.model) modelSet.add(msg.model);
+  }
+
+  // 토큰 합산
+  let totalInputTokens = 0;
+  let totalOutputTokens = 0;
+  for (const msg of messages) {
+    if (msg.type === "gemini" && msg.tokens) {
+      const t = msg.tokens;
+      totalInputTokens += (t.input || 0) + (t.cached || 0) + (t.tool || 0);
+      totalOutputTokens += (t.output || 0) + (t.thoughts || 0);
+    }
+  }
+
+  // tool 통계
+  let toolUseCount = 0;
+  const toolNames = {};
+  for (const msg of messages) {
+    if (msg.type === "gemini" && Array.isArray(msg.toolCalls)) {
+      for (const tc of msg.toolCalls) {
+        toolUseCount++;
+        const name = tc.name || "unknown";
+        toolNames[name] = (toolNames[name] || 0) + 1;
+      }
+    }
+  }
+
+  // 메시지 배열 구축
+  const builtMessages = [];
+  for (const msg of messages) {
+    if (msg.type === "user") {
+      const contentArr = Array.isArray(msg.content) ? msg.content : [];
+      const text = contentArr.map(c => c.text || "").join("\n");
+      builtMessages.push({
+        role: "user",
+        subtype: "user_input",
+        text,
+        timestamp: msg.timestamp,
+      });
+    } else if (msg.type === "gemini") {
+      const text = typeof msg.content === "string" ? msg.content : "";
+      const tools = Array.isArray(msg.toolCalls)
+        ? msg.toolCalls.map(tc => ({ name: tc.name, input: tc.args }))
+        : [];
+      const msgObj = { role: "assistant", timestamp: msg.timestamp };
+      if (text) msgObj.text = text;
+      if (tools.length > 0) msgObj.tools = tools;
+      if (text || tools.length > 0) builtMessages.push(msgObj);
+    }
+    // error 타입은 건너뜀
+  }
+
+  // 키워드/첫 메시지
+  const firstUserMsg = userMessages[0];
+  const contentArr = Array.isArray(firstUserMsg.content) ? firstUserMsg.content : [];
+  const firstMsgText = contentArr.map(c => c.text || "").join("\n");
+  const keywords = extractKeywords(firstMsgText);
+  const timeStr = formatTimestamp(timestamp);
+  const title = [timeStr, ...keywords].join("_");
+
+  const project = normalizeProjectPath(projectRoot || "");
+
+  const metadata = {
+    sessionId,
+    type: "gemini",
+    title,
+    keywords,
+    timestamp,
+    lastTimestamp,
+    project,
+    projectDisplay: project,
+    gitBranch: "",
+    models: [...modelSet],
+    userEntryCount: userMessages.length,
+    userTextMessageCount: userMessages.length,
+    toolResultCount: toolUseCount,
+    toolUseCount,
+    totalInputTokens,
+    totalOutputTokens,
+    toolNames,
+    firstMessage: firstMsgText.substring(0, 200),
+    filePath: absFilePath,
+  };
+
+  return { metadata, messages: builtMessages };
+}
+
+// ── Gemini 이벤트 정규화 ──
+function normalizeGeminiEntries(rawMessages) {
+  const { parseTimestamp } = require("./text-utils.js");
+  const events = [];
+
+  for (const msg of rawMessages) {
+    if (!msg || !msg.timestamp) continue;
+    const timestamp = msg.timestamp;
+    const timestampMs = parseTimestamp(timestamp);
+
+    if (msg.type === "user") {
+      const contentArr = Array.isArray(msg.content) ? msg.content : [];
+      const text = contentArr.map(c => c.text || "").join("\n");
+      if (text) {
+        events.push({ agentId: "", kind: "user_text", source: "main", text, timestamp, timestampMs });
+      }
+    } else if (msg.type === "gemini") {
+      // thoughts
+      if (Array.isArray(msg.thoughts) && msg.thoughts.length > 0) {
+        const thoughtText = msg.thoughts.map(t => t.description || "").filter(Boolean).join("\n");
+        if (thoughtText) {
+          events.push({ agentId: "", kind: "assistant_thinking", source: "main", text: thoughtText, timestamp, timestampMs });
+        }
+      }
+      // tool calls
+      if (Array.isArray(msg.toolCalls)) {
+        for (const tc of msg.toolCalls) {
+          events.push({
+            agentId: "",
+            kind: "tool_use",
+            source: "main",
+            toolName: tc.name || "unknown",
+            toolUseId: tc.id || "",
+            input: tc.args || {},
+            timestamp,
+            timestampMs,
+          });
+          if (tc.result !== undefined) {
+            events.push({
+              agentId: "",
+              kind: "tool_result",
+              source: "main",
+              toolUseId: tc.id || "",
+              rawText: JSON.stringify(tc.result).substring(0, 500),
+              timestamp,
+              timestampMs,
+            });
+          }
+        }
+      }
+      // content text
+      if (typeof msg.content === "string" && msg.content) {
+        events.push({ agentId: "", kind: "assistant_text", source: "main", text: msg.content, timestamp, timestampMs });
+      }
+    }
+  }
+
+  return events.sort((a, b) => a.timestampMs - b.timestampMs);
+}
+
 module.exports = {
   extractKeywords,
   extractKeywordsWithFallback,
@@ -818,10 +993,12 @@ module.exports = {
   getTextFromMessage,
   normalizeCodexEntries,
   normalizeEntries,
+  normalizeGeminiEntries,
   normalizeProjectPath,
   parsePlan,
   parseJSONL,
   processCodexSession,
+  processGeminiSession,
   processSession,
   readJsonl,
 };

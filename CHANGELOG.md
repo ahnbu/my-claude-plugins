@@ -10,6 +10,14 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-12 | feat | - | `shared/session-parser.js` — `processGeminiSession()`, `normalizeGeminiEntries()` 추가: Gemini CLI `session-*.json` 파싱, thoughts/toolCalls 정규화, 토큰 합산(`input+cached+tool`, `output+thoughts`) |
+| 2026-03-12 | feat | - | `shared/session-db.js` — Gemini 세션 DB 통합: `geminiDir` 생성자 옵션, `_syncGeminiDir()` + `_findSessionByFilePath()` 추가, `syncSingleSession()` gemini: 분기, `idx_sessions_file_path` 인덱스 추가 |
+| 2026-03-12 | feat | - | `shared/query-sessions.js` — `--scope gemini` 필터 추가 |
+| 2026-03-12 | feat | - | `my-session-dashboard/build.js` — Gemini 통계(`geminiNew`) 로그 및 `totalNew` 합산 |
+| 2026-03-12 | docs | - | `SESSION-DB.md` — Gemini 통합 반영: 개요·스키마·인덱스·데이터 흐름·파일 맵·CLI·확장 가이드 업데이트 |
+| 2026-03-10 | refactor | - | `my-session-id/` 플러그인 삭제 — 초기 세션 ID 테스트용 플러그인, 현재 미사용(settings.json 미등록); `CLAUDE.md`, `marketplace.json`, `README.md`에서 참조 제거 |
+| 2026-03-10 | refactor | - | `git-hooks/pre-commit`, `git-hooks/check-version-sync.js` → `.bak` 리네임, `.git/hooks/pre-commit` 제거 — 미설치 운용 모드에서 배포 불필요, 커밋 차단 해제 |
+| 2026-03-10 | refactor | - | `my-session-wrap/hooks/check-handoff.js` → `.bak` 리네임, `~/.claude/settings.json` SessionStart에서 해당 hook 제거 — 사용 빈도 낮음 |
 | 2026-03-10 | refactor | - | `git-hooks/auto-push-update.js`, `git-hooks/post-commit` → `.bak` 리네임 — plugin 미설치 운용 모드에서 배포 자동화 불필요, 배포 시 복원용으로 보존 |
 | 2026-03-10 | refactor | - | `my-session-wrap/hooks/inject-plugin-guidelines.js` → `.bak` 리네임, `~/.claude/settings.json` SessionStart에서 해당 hook 제거 — plugin 미설치 운용 모드에서 배포 절차 주입 불필요 |
 | 2026-03-10 | docs | - | `CLAUDE.md` — 배포 워크플로우 섹션을 미설치 운용 모드 기준으로 재작성, 세션 DB 정본을 소스 레포 `output/`로 명시 |
