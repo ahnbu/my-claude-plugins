@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-15 | fix | my-session-wrap | `SKILL.md` Step 4-2 출력 템플릿 — `<handoff 파일 경로>` → `<handoff 절대경로 (상대경로 금지)>` 로 변경하여 AI가 상대경로를 사용하는 경우 방지 |
 | 2026-03-14 | feat | my-session-dashboard | `index.html` — favicon 추가: dashboard.ico를 base64 inline으로 삽입 |
 | 2026-03-12 | docs | - | `20260312_wrap_스킬_통합_리팩터링_구현계획.md` — wrap 스킬 통합 리팩터링 의사결정 기록 (대안 비교·검증 결과 포함) |
 | 2026-03-12 | refactor | my-session-wrap | `SKILL.md` 통합 리팩터링 — name: wrap, Step 0 런타임 감지(detect-runtime.ps1), 세션 ID 3분기(Claude/Codex/Gemini), bash/pwsh 스크립트 통합 호출, 관심사별 커밋 사이클 공통 적용; `next-handoff.ps1` 추가(Codex에서 이식); `template.md` 플레이스홀더 통일; `commands/wrap.md` 참조명 my-session-wrap→wrap |

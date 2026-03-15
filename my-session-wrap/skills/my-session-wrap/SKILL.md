@@ -145,7 +145,8 @@ echo $CODEX_THREAD_ID
 cat "$HOME/.gemini/tmp/<project-name>/logs.json" | grep -o '"sessionId":"[^"]*"' | head -1
 ```
 
-- 세션 경로: `~/.gemini/tmp/<project-name>/chats/session-*.json`
+- 세션 경로: `C:/Users/ahnbu/.gemini/tmp/<project-name>[-N]/logs.json`
+  (동시 세션 시 suffix: skills / skills-1 / skills-2 …)
 
 **RUNTIME = unknown:**
 
@@ -273,7 +274,7 @@ handoff의 `[규칙 후보]` 태그가 1개 이상이면 재개 안내에 포함
 
 ```
 ---
-✅ Handoff 저장 완료: <handoff 파일 경로>
+✅ Handoff 저장: <handoff 절대경로 (상대경로 금지)>
 
 다음 세션에서 이어가려면:
   이전 세션에 이어서 작업합니다. /continue
