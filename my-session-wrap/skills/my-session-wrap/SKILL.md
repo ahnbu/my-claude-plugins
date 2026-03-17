@@ -156,19 +156,15 @@ cat "$HOME/.gemini/tmp/<project-name>/logs.json" | grep -o '"sessionId":"[^"]*"'
 
 세션 작업 내용을 3-4단어로 요약한다 (예: `출력경로변경`, `세션ID-훅수정`).
 
-아래 순서로 스크립트를 실행하여 경로를 결정한다:
+이 대화의 hook 피드백에서 `[handoff_script=...]`를 찾아 해당 경로를 사용한다.
 
 ```bash
-# bash 우선 (Claude/Gemini 환경)
-SCRIPT=$(find "$HOME/.claude" -path "*/my-session-wrap/scripts/next-handoff.sh" -print -quit 2>/dev/null)
-if [ -n "$SCRIPT" ]; then
-  bash "$SCRIPT" "" "<요약>"
-else
-  # pwsh 폴백 (Codex 환경)
-  SCRIPT=$(find "$HOME/.claude" -path "*/my-session-wrap/scripts/next-handoff.ps1" -print -quit 2>/dev/null)
-  pwsh -File "$SCRIPT" -Summary "<요약>"
-fi
+bash "<handoff_script 경로>" "" "<요약>"
 ```
+
+- `<handoff_script 경로>`: hook 피드백의 `[handoff_script=...]`에서 추출한 절대경로
+- `<요약>`: 세션 작업 내용 3-4단어 요약
+- hook 피드백에 `handoff_script`가 없으면: `find "$HOME/.claude" -path "*/my-session-wrap/scripts/next-handoff.sh" -print -quit` 로 폴백
 
 스크립트는 ProjectRoot를 다음 우선순위로 자동 결정한다:
 1. 첫 번째 인자 (명시적 경로) — 비워두면 자동 탐색

@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/capture-session-id.js\"",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/prompt-context.js\"",
             "timeout": 3000
           }
         ]

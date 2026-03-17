@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-17 | refactor | my-session-wrap | handoff 스크립트 경로를 hook 피드백 기반으로 전환 — `capture-session-id.js` → `prompt-context.js` 리네임, `/wrap` 감지 시 스크립트 절대경로 제공, SKILL.md에서 `find` 제거 |
 | 2026-03-15 | fix | my-session-wrap | `SKILL.md` Step 4-2 출력 템플릿 — `<handoff 파일 경로>` → `<handoff 절대경로 (상대경로 금지)>` 로 변경하여 AI가 상대경로를 사용하는 경우 방지 |
 | 2026-03-14 | feat | my-session-dashboard | `index.html` — favicon 추가: dashboard.ico를 base64 inline으로 삽입 |
 | 2026-03-12 | docs | - | `20260312_wrap_스킬_통합_리팩터링_구현계획.md` — wrap 스킬 통합 리팩터링 의사결정 기록 (대안 비교·검증 결과 포함) |
