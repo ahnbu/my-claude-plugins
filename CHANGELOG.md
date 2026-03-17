@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-17 | docs | _docs | 의사결정 문서 2건 `_docs/`로 이동 — wrap 세션DB 통합 검토, 세션DB session alias 동기화 |
 | 2026-03-17 | feat | my-session-wrap | wrap 세션DB 통합 — `extract-session-summary.js` 신규, SKILL.md에 Step 2-1.5 DB 조회 + Step 2-4 대조 검수 추가, handoff 템플릿에 토큰·도구 통계 필드 추가 |
 | 2026-03-17 | refactor | my-session-wrap | handoff 스크립트 경로를 hook 피드백 기반으로 전환 — `capture-session-id.js` → `prompt-context.js` 리네임, `/wrap` 감지 시 스크립트 절대경로 제공, SKILL.md에서 `find` 제거 |
 | 2026-03-17 | docs | my-session-wrap | handoff 경로 오류 수정 의사결정 문서 — 6개 대안 비교분석, D'' Hook 통합 방식 채택 근거 |
