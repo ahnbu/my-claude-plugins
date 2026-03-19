@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-19 | feat | my-session-dashboard | 검색창 반응형 개선 — `.header` flex-wrap, `.search-box` min-width 200px, 1024px 미디어쿼리 추가로 반쪽 모니터 대응 |
 | 2026-03-19 | feat | my-session-dashboard | `session-parser.js` — isMeta 스킬 본문 대화내역 제외: `if (entry.isMeta) continue;` 추가, DB·HTML·TOC 노이즈 제거 |
 | 2026-03-19 | feat | shared/query-sessions.js | query-sessions 스크립트 업데이트 |
 | 2026-03-19 | docs | _docs | 루트 문서 3건 삭제 후 `_docs/`에 통합 버전 3건 추가 — Codex/Gemini 호출구분 실험일지, Gemini 자동호출 세션 제외, wrap 스킬 통합 리팩터링 구현계획과 반영결과; 훅현황 정리작업 문서 보완 |
