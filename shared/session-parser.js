@@ -268,6 +268,9 @@ function processSession(filePath) {
         userTextMessageCount++;
       }
 
+      // isMeta (스킬 본문 주입)는 messages에서 제외 — Skill tool_use로 이미 추적됨
+      if (entry.isMeta) continue;
+
       // 메시지 분류 (대시보드 역할 라벨 분화용)
       const isToolResult = Array.isArray(content) && content.some(b => b.type === "tool_result");
       const subtype = entry.isMeta ? "meta"

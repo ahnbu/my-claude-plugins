@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-19 | feat | my-session-dashboard | `session-parser.js` — isMeta 스킬 본문 대화내역 제외: `if (entry.isMeta) continue;` 추가, DB·HTML·TOC 노이즈 제거 |
 | 2026-03-19 | feat | shared/query-sessions.js | query-sessions 스크립트 업데이트 |
 | 2026-03-19 | docs | _docs | 루트 문서 3건 삭제 후 `_docs/`에 통합 버전 3건 추가 — Codex/Gemini 호출구분 실험일지, Gemini 자동호출 세션 제외, wrap 스킬 통합 리팩터링 구현계획과 반영결과; 훅현황 정리작업 문서 보완 |
 | 2026-03-17 | docs | _docs | 의사결정 문서 2건 `_docs/`로 이동 — wrap 세션DB 통합 검토, 세션DB session alias 동기화 |
