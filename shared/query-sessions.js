@@ -27,7 +27,7 @@ function printUsage() {
 
 Commands:
   search <keyword>     키워드 검색 (title, keywords, tool_names, first_message)
-  get <session_id>     세션 메타데이터 단건 조회
+  get <session_id>     세션 메타데이터 단건 조회 (alias: session)
   recent [N]           최근 N개 세션 (기본 10)
   by-tool <tool>       특정 도구/스킬 사용 세션
   by-project <name>    특정 프로젝트 세션
@@ -188,6 +188,7 @@ function main() {
         result = cmdSearch(db, keyword, opts);
         break;
       }
+      case "session":
       case "get": {
         const sessionId = opts.positional[0];
         if (!sessionId) {
