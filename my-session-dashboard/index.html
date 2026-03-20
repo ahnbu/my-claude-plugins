@@ -818,7 +818,8 @@
   let activeFilter = "all";
   let activeTypeFilter = "all";
   let searchQuery = "";
-  let showCodexExec = false;
+  let showCodexExec = localStorage.getItem("ss:showCodexExec") === "true";
+  let showAntigravity = localStorage.getItem("ss:showAntigravity") === "true";
 
   const ROLE_LABELS = { user: "사용자", assistant: "어시스턴트" };
 
@@ -879,6 +880,7 @@
     }
     if (hasAntigravity) {
       typeHtml += '<button class="filter-btn" data-type-filter="antigravity">Antigravity</button>';
+      typeHtml += '<label class="codex-sub-filter" id="antigravitySubFilter"><input type="checkbox" id="antigravityCheck"> AG 포함</label>';
     }
     typeContainer.innerHTML = typeHtml;
 
@@ -893,16 +895,36 @@
       if (subFilter) {
         subFilter.classList.toggle("visible", activeTypeFilter === "codex");
       }
+      // Antigravity 서브필터: "전체" 탭에서만 표시
+      const agSubFilter = document.getElementById("antigravitySubFilter");
+      if (agSubFilter) {
+        agSubFilter.classList.toggle("visible", activeTypeFilter === "all");
+      }
       renderSessionList();
     });
 
-    // 서브태스크 포함 체크박스
+    // 서브태스크 포함 체크박스 (localStorage 복원)
     const codexExecCheck = document.getElementById("codexExecCheck");
     if (codexExecCheck) {
+      codexExecCheck.checked = showCodexExec;
       codexExecCheck.addEventListener("change", (e) => {
         showCodexExec = e.target.checked;
+        localStorage.setItem("ss:showCodexExec", showCodexExec);
         renderSessionList();
       });
+    }
+
+    // Antigravity 포함 체크박스 (localStorage 복원)
+    const antigravityCheck = document.getElementById("antigravityCheck");
+    if (antigravityCheck) {
+      antigravityCheck.checked = showAntigravity;
+      antigravityCheck.addEventListener("change", (e) => {
+        showAntigravity = e.target.checked;
+        localStorage.setItem("ss:showAntigravity", showAntigravity);
+        renderSessionList();
+      });
+      // 초기 로드 시 "전체" 탭이면 AG 서브필터 표시
+      document.getElementById("antigravitySubFilter").classList.add("visible");
     }
 
     // 프로젝트 필터 → filters 행에 렌더
@@ -973,6 +995,8 @@
       if (activeTypeFilter === "antigravity" && sType !== "antigravity") return false;
       // Codex exec 필터: 전체/Codex 탭에서 showCodexExec=false 시 codex_exec 제외
       if (sType === "codex" && !showCodexExec && s.originator === "codex_exec") return false;
+      // Antigravity 필터: 전체 탭에서 showAntigravity=false 시 제외
+      if (sType === "antigravity" && activeTypeFilter === "all" && !showAntigravity) return false;
       // 프로젝트 필터 (세션/codex/gemini에 적용)
       if (activeFilter !== "all" && (sType === "session" || sType === "codex" || sType === "gemini" || sType === "antigravity") && s.projectDisplay !== activeFilter) return false;
       if (searchQuery) {
