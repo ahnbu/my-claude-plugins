@@ -33,7 +33,7 @@ Commands:
   by-project <name>    특정 프로젝트 세션
 
 Options:
-  --scope <claude|codex|plan|gemini>  타입 필터 (기본: all)
+  --scope <claude|codex|plan|gemini|antigravity>  타입 필터 (기본: all)
   --limit <N>                  결과 수 제한 (기본: 10)
   --help                       이 도움말 표시
 
@@ -78,6 +78,7 @@ function buildScopeFilter(scope) {
   if (scope === "codex") return "AND type = 'codex'";
   if (scope === "plan") return "AND type = 'plan'";
   if (scope === "gemini") return "AND type = 'gemini'";
+  if (scope === "antigravity") return "AND type = 'antigravity'";
   return "";
 }
 

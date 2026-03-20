@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-20 | feat | shared | Antigravity IDE 대화 세션DB 통합 — `session-parser.js`에 `processAntigravitySession()`·`normalizeAntigravityEntries()` 추가, `session-db.js`에 `syncAntigravity()`·`_syncAntigravityFile()` 추가, `query-sessions.js`에 `--scope antigravity` 필터 추가. export JSON 기반 증분 동기화 |
 | 2026-03-19 | feat | my-session-dashboard | 검색창 반응형 개선 — `.header` flex-wrap, `.search-box` min-width 200px, 1024px 미디어쿼리 추가로 반쪽 모니터 대응 |
 | 2026-03-19 | feat | my-session-dashboard | `session-parser.js` — isMeta 스킬 본문 대화내역 제외: `if (entry.isMeta) continue;` 추가, DB·HTML·TOC 노이즈 제거 |
 | 2026-03-19 | feat | shared/query-sessions.js | query-sessions 스크립트 업데이트 |

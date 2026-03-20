@@ -10,7 +10,9 @@ const {
   processSession,
   processCodexSession,
   processGeminiSession,
+  processAntigravitySession,
   parsePlan,
+  normalizeAntigravityEntries,
   normalizeCodexEntries,
   normalizeEntries,
   normalizeGeminiEntries,
@@ -22,6 +24,17 @@ const DEFAULT_PROJECTS_DIR = path.join(HOME, ".claude", "projects");
 const DEFAULT_PLANS_DIR = path.join(HOME, ".claude", "plans");
 const DEFAULT_CODEX_DIR = path.join(HOME, ".codex", "sessions");
 const DEFAULT_GEMINI_DIR = path.join(HOME, ".gemini", "tmp");
+const DEFAULT_ANTIGRAVITY_EXPORT = path.join(HOME, ".antigravity", "export", "conversations_export.json");
+const SESSION_CONFIG_PATH = path.join(HOME, ".claude", "session-config.json");
+
+function loadSessionConfig() {
+  try {
+    if (fs.existsSync(SESSION_CONFIG_PATH)) {
+      return JSON.parse(fs.readFileSync(SESSION_CONFIG_PATH, "utf8"));
+    }
+  } catch { /* ignore */ }
+  return {};
+}
 
 class SessionDB {
   /**
@@ -30,6 +43,8 @@ class SessionDB {
    * @param {string} [options.projectsDir]
    * @param {string} [options.plansDir]
    * @param {string} [options.codexDir]
+   * @param {string} [options.antigravityExportPath]
+   * @param {boolean} [options.includeAntigravity]
    */
   constructor(dbPath, options = {}) {
     this.dbPath = dbPath;
@@ -37,6 +52,13 @@ class SessionDB {
     this.plansDir = options.plansDir || DEFAULT_PLANS_DIR;
     this.codexDir = options.codexDir || DEFAULT_CODEX_DIR;
     this.geminiDir = options.geminiDir || DEFAULT_GEMINI_DIR;
+    const config = loadSessionConfig();
+    this.antigravityExportPath = options.antigravityExportPath
+      || config.antigravityExportPath
+      || DEFAULT_ANTIGRAVITY_EXPORT;
+    this.includeAntigravity = options.includeAntigravity
+      ?? config.includeAntigravity
+      ?? false;
 
     fs.mkdirSync(path.dirname(dbPath), { recursive: true });
     this.db = new DatabaseSync(dbPath);
@@ -150,6 +172,7 @@ class SessionDB {
     let planNew = 0, planCached = 0;
     let codexNew = 0, codexCached = 0;
     let geminiNew = 0, geminiCached = 0;
+    let antigravityNew = 0, antigravityCached = 0;
 
     this.db.exec("BEGIN");
     try {
@@ -238,6 +261,13 @@ class SessionDB {
         this._syncGeminiDir(this.geminiDir, dbMtimes, (c, n) => { geminiCached += c; geminiNew += n; }, verbose);
       }
 
+      // ── Antigravity 세션 ──
+      if (this.includeAntigravity || options.includeAntigravity) {
+        const agResult = this._syncAntigravityFile(this.antigravityExportPath, dbMtimes, verbose);
+        antigravityNew = agResult.newCount;
+        antigravityCached = agResult.cachedCount;
+      }
+
       this.db.exec("COMMIT");
     } catch (err) {
       this.db.exec("ROLLBACK");
@@ -245,10 +275,14 @@ class SessionDB {
     }
 
     if (verbose) {
-      console.log(`  Claude: 신규 ${claudeNew}, 캐시 ${claudeCached} | 플랜: 신규 ${planNew}, 캐시 ${planCached} | Codex: 신규 ${codexNew}, 캐시 ${codexCached} | Gemini: 신규 ${geminiNew}, 캐시 ${geminiCached}`);
+      let logLine = `  Claude: 신규 ${claudeNew}, 캐시 ${claudeCached} | 플랜: 신규 ${planNew}, 캐시 ${planCached} | Codex: 신규 ${codexNew}, 캐시 ${codexCached} | Gemini: 신규 ${geminiNew}, 캐시 ${geminiCached}`;
+      if (antigravityNew || antigravityCached) {
+        logLine += ` | Antigravity: 신규 ${antigravityNew}, 캐시 ${antigravityCached}`;
+      }
+      console.log(logLine);
     }
 
-    return { claudeNew, claudeCached, planNew, planCached, codexNew, codexCached, geminiNew, geminiCached };
+    return { claudeNew, claudeCached, planNew, planCached, codexNew, codexCached, geminiNew, geminiCached, antigravityNew, antigravityCached };
   }
 
   _syncCodexDir(codexDir, dbMtimes, countCb, verbose) {
@@ -356,6 +390,91 @@ class SessionDB {
   _findSessionByFilePath(absPath) {
     const row = this.db.prepare("SELECT session_id, mtime FROM sessions WHERE file_path = ?").get(absPath);
     return row || null;
+  }
+
+  // ── Antigravity 동기화 ──
+
+  _syncAntigravityFile(exportPath, dbMtimes, verbose) {
+    let newCount = 0, cachedCount = 0;
+
+    if (!fs.existsSync(exportPath)) {
+      if (verbose) console.warn(`⚠️  Antigravity export 파일 없음: ${exportPath}`);
+      return { newCount, cachedCount };
+    }
+
+    const absExportPath = path.resolve(exportPath);
+    let conversations;
+    try {
+      conversations = JSON.parse(fs.readFileSync(exportPath, "utf8"));
+    } catch (err) {
+      if (verbose) console.warn(`⚠️  Antigravity JSON 파싱 실패: ${err.message}`);
+      return { newCount, cachedCount };
+    }
+
+    if (!Array.isArray(conversations)) {
+      if (verbose) console.warn(`⚠️  Antigravity export가 배열이 아님`);
+      return { newCount, cachedCount };
+    }
+
+    for (const conv of conversations) {
+      const cascadeId = conv.cascade_id;
+      if (!cascadeId) continue;
+      const cacheKey = "antigravity:" + cascadeId;
+
+      // last_modified_time/created_time이 빈 문자열일 수 있음 → 첫 메시지 timestamp 폴백
+      const firstMsgTs = (conv.messages || []).find(m => m.timestamp)?.timestamp || "";
+      const convMtimeRaw = conv.last_modified_time || conv.created_time || firstMsgTs;
+      const convMtime = convMtimeRaw ? new Date(convMtimeRaw).getTime() : 0;
+      if (dbMtimes.get(cacheKey) === convMtime) {
+        cachedCount++;
+        continue;
+      }
+
+      try {
+        const result = processAntigravitySession(conv, absExportPath);
+        if (!result || result.metadata.userEntryCount === 0) continue;
+        this._upsertSession(result.metadata, convMtime);
+        this._upsertMessages(result.metadata.sessionId, result.messages);
+        newCount++;
+      } catch (err) {
+        if (verbose) console.warn(`⚠️  Antigravity 파싱 실패: ${cascadeId} — ${err.message}`);
+      }
+    }
+
+    return { newCount, cachedCount };
+  }
+
+  /**
+   * Antigravity 전용 동기화 — export JSON 파일을 명시적으로 지정 가능
+   * @param {object} [options]
+   * @param {string} [options.exportPath] - conversations_export.json 경로
+   * @param {boolean} [options.verbose=true]
+   * @returns {{ antigravityNew, antigravityCached }}
+   */
+  syncAntigravity(options = {}) {
+    const verbose = options.verbose !== false;
+    const exportPath = options.exportPath || this.antigravityExportPath;
+
+    const dbMtimes = new Map();
+    for (const row of this.db.prepare(
+      "SELECT session_id, mtime FROM sessions WHERE type = 'antigravity'"
+    ).all()) {
+      dbMtimes.set(row.session_id, row.mtime);
+    }
+
+    this.db.exec("BEGIN");
+    try {
+      const result = this._syncAntigravityFile(exportPath, dbMtimes, verbose);
+      this.db.exec("COMMIT");
+
+      if (verbose) {
+        console.log(`  Antigravity: 신규 ${result.newCount}, 캐시 ${result.cachedCount}`);
+      }
+      return { antigravityNew: result.newCount, antigravityCached: result.cachedCount };
+    } catch (err) {
+      this.db.exec("ROLLBACK");
+      throw err;
+    }
   }
 
   /** plan_slug 기반 slug→sessionId 맵 (DB 조회) */
@@ -553,6 +672,24 @@ class SessionDB {
         throw new Error(`Gemini JSON 파싱 실패: ${err.message}`);
       }
       const events = normalizeGeminiEntries(rawData.messages || []);
+      this._upsertEvents(sessionId, "", events);
+      return;
+    }
+
+    // Antigravity 세션 분기
+    if (sessionId.startsWith("antigravity:")) {
+      const cascadeId = sessionId.slice("antigravity:".length);
+      const sessionRow = this.db.prepare("SELECT file_path FROM sessions WHERE session_id = ?").get(sessionId);
+      if (!sessionRow || !sessionRow.file_path || !fs.existsSync(sessionRow.file_path)) {
+        throw new Error(`Antigravity export file not found: ${sessionId}`);
+      }
+      let conversations;
+      try { conversations = JSON.parse(fs.readFileSync(sessionRow.file_path, "utf8")); } catch (err) {
+        throw new Error(`Antigravity JSON 파싱 실패: ${err.message}`);
+      }
+      const conv = conversations.find(c => c.cascade_id === cascadeId);
+      if (!conv) throw new Error(`Antigravity conversation not found: ${cascadeId}`);
+      const events = normalizeAntigravityEntries(conv.messages || []);
       this._upsertEvents(sessionId, "", events);
       return;
     }

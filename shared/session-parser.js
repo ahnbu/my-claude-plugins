@@ -988,18 +988,154 @@ function normalizeGeminiEntries(rawMessages) {
   return events.sort((a, b) => a.timestampMs - b.timestampMs);
 }
 
+// ── Antigravity 세션 파싱 ──
+function processAntigravitySession(conversation, exportFilePath) {
+  const cascadeId = conversation.cascade_id;
+  if (!cascadeId) return null;
+
+  const sessionId = "antigravity:" + cascadeId;
+  const rawMessages = conversation.messages || [];
+  const userMessages = rawMessages.filter(m => m.role === "user");
+  if (userMessages.length === 0) return null;
+
+  // created_time 폴백: 빈 문자열이면 첫 메시지 timestamp 사용
+  const firstMsgTs = rawMessages.find(m => m.timestamp)?.timestamp || "";
+  const timestamp = conversation.created_time || firstMsgTs;
+  if (!timestamp || isNaN(new Date(timestamp).getTime())) return null;
+
+  const lastMsgTs = [...rawMessages].reverse().find(m => m.timestamp)?.timestamp || "";
+  const lastTimestamp = conversation.last_modified_time || lastMsgTs || timestamp;
+
+  // workspace URI → project 경로
+  let project = "";
+  if (Array.isArray(conversation.workspaces) && conversation.workspaces.length > 0) {
+    try {
+      const url = new URL(conversation.workspaces[0]);
+      project = normalizeProjectPath(decodeURIComponent(url.pathname).replace(/^\//, ""));
+    } catch {
+      project = conversation.workspaces[0];
+    }
+  }
+
+  // tool 통계
+  let toolUseCount = 0;
+  const toolNames = {};
+  for (const msg of rawMessages) {
+    if (msg.role === "tool" && msg.tool_name) {
+      toolUseCount++;
+      toolNames[msg.tool_name] = (toolNames[msg.tool_name] || 0) + 1;
+    }
+  }
+
+  // 메시지 배열
+  const builtMessages = [];
+  for (const msg of rawMessages) {
+    if (msg.role === "user") {
+      builtMessages.push({
+        role: "user",
+        subtype: "user_input",
+        text: msg.content || "",
+        timestamp: msg.timestamp || null,
+      });
+    } else if (msg.role === "assistant") {
+      builtMessages.push({
+        role: "assistant",
+        text: msg.content || "",
+        timestamp: msg.timestamp || null,
+      });
+    } else if (msg.role === "tool") {
+      builtMessages.push({
+        role: "assistant",
+        subtype: "tool_use",
+        text: msg.content || "",
+        timestamp: msg.timestamp || null,
+        tools: [{ name: msg.tool_name || "unknown" }],
+      });
+    }
+  }
+
+  // 키워드/첫 메시지/제목
+  const firstMsgText = (userMessages[0]?.content || "").substring(0, 500);
+  const keywords = extractKeywords(firstMsgText);
+  const agTitle = conversation.title;
+  const title = (agTitle && !agTitle.startsWith("_unindexed_"))
+    ? agTitle
+    : [formatTimestamp(timestamp), ...keywords].join("_");
+
+  const metadata = {
+    sessionId,
+    type: "antigravity",
+    title,
+    keywords,
+    timestamp,
+    lastTimestamp,
+    project,
+    projectDisplay: project,
+    gitBranch: "",
+    models: [],
+    userEntryCount: userMessages.length,
+    userTextMessageCount: userMessages.length,
+    toolResultCount: toolUseCount,
+    toolUseCount,
+    totalInputTokens: 0,
+    totalOutputTokens: 0,
+    toolNames,
+    firstMessage: firstMsgText.substring(0, 200),
+    filePath: exportFilePath || "",
+  };
+
+  return { metadata, messages: builtMessages };
+}
+
+// ── Antigravity 이벤트 정규화 ──
+function normalizeAntigravityEntries(rawMessages) {
+  const { parseTimestamp } = require("./text-utils.js");
+  const events = [];
+
+  for (const msg of rawMessages) {
+    if (!msg || !msg.timestamp) continue;
+    const timestamp = msg.timestamp;
+    const timestampMs = parseTimestamp(timestamp);
+
+    if (msg.role === "user") {
+      if (msg.content) {
+        events.push({ agentId: "", kind: "user_text", source: "main", text: msg.content, timestamp, timestampMs });
+      }
+    } else if (msg.role === "assistant") {
+      if (msg.content) {
+        events.push({ agentId: "", kind: "assistant_text", source: "main", text: msg.content, timestamp, timestampMs });
+      }
+    } else if (msg.role === "tool") {
+      events.push({
+        agentId: "",
+        kind: "tool_use",
+        source: "main",
+        toolName: msg.tool_name || "unknown",
+        toolUseId: "",
+        input: msg.content || "",
+        timestamp,
+        timestampMs,
+      });
+    }
+  }
+
+  return events.sort((a, b) => (a.timestampMs || 0) - (b.timestampMs || 0));
+}
+
 module.exports = {
   extractKeywords,
   extractKeywordsWithFallback,
   findCwd,
   formatTimestamp,
   getTextFromMessage,
+  normalizeAntigravityEntries,
   normalizeCodexEntries,
   normalizeEntries,
   normalizeGeminiEntries,
   normalizeProjectPath,
   parsePlan,
   parseJSONL,
+  processAntigravitySession,
   processCodexSession,
   processGeminiSession,
   processSession,
