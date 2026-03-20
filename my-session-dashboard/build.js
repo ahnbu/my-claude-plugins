@@ -50,107 +50,22 @@ function main() {
   // 메타 + 데이터 조회
   const allMeta = db.getAllMeta();
 
-  // 메시지를 세션별 개별 JSON 파일로 증분 출력
-  const dataDir = path.join(DIST_DIR, "data");
-  fs.mkdirSync(dataDir, { recursive: true });
-
-  // DB sessionId → safeId + DB mtime 맵 구축
-  const dbSessionMap = new Map(); // safeId → { meta, dbMtime }
+  const sessionsData = {};
   for (const meta of allMeta) {
-    const safeId = meta.sessionId.replace(/[^a-zA-Z0-9_-]/g, "_");
-    dbSessionMap.set(safeId, meta);
-  }
-
-  // data/ 기존 파일 목록
-  const existingFiles = new Set();
-  try {
-    for (const f of fs.readdirSync(dataDir)) {
-      if (f.endsWith(".json")) existingFiles.add(f.replace(/\.json$/, ""));
-    }
-  } catch {}
-
-  let dataCreated = 0, dataUpdated = 0, dataDeleted = 0, dataSkipped = 0;
-
-  // DB mtime를 별도 조회 (getAllMeta는 mtime을 포함하지 않으므로)
-  const dbMtimeMap = new Map();
-  const mtimeRows = db.db.prepare("SELECT session_id, mtime FROM sessions WHERE type != 'gemini_excluded'").all();
-  for (const row of mtimeRows) {
-    const safeId = row.session_id.replace(/[^a-zA-Z0-9_-]/g, "_");
-    dbMtimeMap.set(safeId, row.mtime);
-  }
-
-  for (const [safeId, meta] of dbSessionMap) {
-    const filePath = path.join(dataDir, `${safeId}.json`);
-    const dbMtime = dbMtimeMap.get(safeId) || 0;
-
-    if (existingFiles.has(safeId)) {
-      // 파일 존재 → mtime 비교
-      try {
-        const fileMtime = fs.statSync(filePath).mtimeMs;
-        // 파일 mtime이 DB mtime과 일치하면 스킵 (1초 이내 오차 허용)
-        if (dbMtime && Math.abs(fileMtime - dbMtime) < 1000) {
-          dataSkipped++;
-          existingFiles.delete(safeId);
-          continue;
-        }
-      } catch {}
-      // mtime 불일치 → 갱신
-      const data = meta.type === "plan" ? db.getPlanContent(meta.sessionId) : db.getMessages(meta.sessionId);
-      fs.writeFileSync(filePath, JSON.stringify(data));
-      // 파일 mtime을 DB mtime에 맞춰 다음 빌드에서 캐시 히트
-      if (dbMtime) { const t = dbMtime / 1000; fs.utimesSync(filePath, t, t); }
-      dataUpdated++;
+    if (meta.type === "plan") {
+      sessionsData[meta.sessionId] = db.getPlanContent(meta.sessionId);
     } else {
-      // 파일 미존재 → 생성
-      const data = meta.type === "plan" ? db.getPlanContent(meta.sessionId) : db.getMessages(meta.sessionId);
-      fs.writeFileSync(filePath, JSON.stringify(data));
-      if (dbMtime) { const t = dbMtime / 1000; fs.utimesSync(filePath, t, t); }
-      dataCreated++;
+      sessionsData[meta.sessionId] = db.getMessages(meta.sessionId);
     }
-    existingFiles.delete(safeId);
   }
 
-  // 고아 파일 삭제 (DB에 없는 data/*.json)
-  for (const orphanId of existingFiles) {
-    fs.unlinkSync(path.join(dataDir, `${orphanId}.json`));
-    dataDeleted++;
-  }
-
-  console.log(`📦 data/: 생성 ${dataCreated}, 갱신 ${dataUpdated}, 스킵 ${dataSkipped}, 삭제 ${dataDeleted}`);
-
-  // 검색 인덱스 생성 (메타 필드 + 대화 텍스트 전체, 도구 JSON 제외)
-  const searchIndex = {};
-  for (const meta of allMeta) {
-    const fields = [
-      meta.title, meta.firstMessage,
-      ...(meta.keywords || []),
-      meta.projectDisplay, meta.gitBranch, meta.sessionId,
-    ];
-    if (meta.toolNames) fields.push(...Object.keys(meta.toolNames));
-    // 대화 텍스트 전체 추출 (도구 JSON 제외 — 46MB/69%가 검색 가치 낮음)
-    const safeId = meta.sessionId.replace(/[^a-zA-Z0-9_-]/g, "_");
-    const dataFile = path.join(dataDir, `${safeId}.json`);
-    try {
-      const content = JSON.parse(fs.readFileSync(dataFile, "utf8"));
-      if (typeof content === "string") {
-        // plan: 마크다운 전체
-        fields.push(content);
-      } else if (Array.isArray(content)) {
-        // session: m.text만 추출 (m.tools 제외)
-        const texts = content.filter(m => m.text).map(m => m.text).join(" ");
-        fields.push(texts);
-      }
-    } catch {}
-    searchIndex[meta.sessionId] = fields.filter(Boolean).join(" ").toLowerCase();
-  }
-
-  // Build HTML — 메타만 인라인, 메시지는 lazy load
+  // Build self-contained HTML
   const metaJson = JSON.stringify(allMeta).replace(/<\//g, "<\\/");
-  const searchIndexJson = JSON.stringify(searchIndex).replace(/<\//g, "<\\/");
+  const dataJson = JSON.stringify(sessionsData).replace(/<\//g, "<\\/");
   let html = fs.readFileSync(htmlSrc, "utf8");
   const dataScript = `<script>
 window.__SESSIONS_META__ = ${metaJson};
-window.__SEARCH_INDEX__ = ${searchIndexJson};
+window.__SESSIONS_DATA__ = ${dataJson};
 </script>`;
   // indexOf + substring 사용 ($ 특수문자 안전 처리)
   const placeholder = "<!-- __SESSION_DATA__ -->";

@@ -839,20 +839,9 @@
     renderSessionList();
   }
 
-  const messageCache = new Map();
-
-  async function loadConversation(sessionId) {
-    if (messageCache.has(sessionId)) return messageCache.get(sessionId);
-    const safeId = sessionId.replace(/[^a-zA-Z0-9_-]/g, "_");
-    try {
-      const resp = await fetch(`data/${safeId}.json`);
-      if (!resp.ok) return [];
-      const data = await resp.json();
-      messageCache.set(sessionId, data);
-      return data;
-    } catch {
-      return [];
-    }
+  function loadConversation(sessionId) {
+    const data = window.__SESSIONS_DATA__ || {};
+    return data[sessionId] || [];
   }
 
   // ── Stats ──
@@ -1013,8 +1002,30 @@
       if (activeFilter !== "all" && (sType === "session" || sType === "codex" || sType === "gemini" || sType === "antigravity") && s.projectDisplay !== activeFilter) return false;
       if (searchQuery) {
         const terms = searchQuery.toLowerCase().split(/\s+/).filter(Boolean);
-        const searchIndex = window.__SEARCH_INDEX__ || {};
-        const searchable = searchIndex[s.sessionId] || "";
+        const fields = [
+          s.title,
+          s.firstMessage,
+          ...(s.keywords || []),
+          s.projectDisplay,
+          s.gitBranch,
+          s.sessionId,
+        ];
+        // toolNames 키 추가 (도구명으로 검색 가능)
+        if (s.toolNames) fields.push(...Object.keys(s.toolNames));
+        // 세션/plan 모두 대화 내용 검색 대상에 포함
+        const conv = loadConversation(s.sessionId);
+        if (typeof conv === "string") {
+          // plan: markdown content
+          fields.push(conv.substring(0, 2000));
+        } else if (Array.isArray(conv)) {
+          // session: messages 배열에서 텍스트 추출
+          const texts = conv
+            .filter(m => m.text)
+            .map(m => m.text)
+            .join(" ");
+          fields.push(texts.substring(0, 10000));
+        }
+        const searchable = fields.join(" ").toLowerCase();
         // 공백으로 분리된 각 단어가 모두 포함되어야 함 (AND 검색)
         if (!terms.every(t => searchable.includes(t))) return false;
       }
@@ -1022,66 +1033,8 @@
     });
   }
 
-  // 가상 스크롤 상태
-  let lastFilteredSessions = [];
-  const ITEM_HEIGHT = 82; // 세션 아이템 추정 높이(px)
-  const BUFFER = 5; // 상하 여유 아이템 수
-
-  function renderSessionItem(s) {
-    const isActive = s.sessionId === activeSessionId;
-    const date = new Date(s.timestamp);
-    const dateStr = date.toLocaleDateString("ko-KR", {
-      year: "numeric", month: "2-digit", day: "2-digit",
-    });
-    const timeStr = date.toLocaleTimeString("ko-KR", {
-      hour: "2-digit", minute: "2-digit", hour12: false,
-    });
-
-    const isPlan = s.type === "plan";
-    const isCodex = s.type === "codex";
-    const isGemini = s.type === "gemini";
-    const isAntigravity = s.type === "antigravity";
-    const itemClass = "session-item" +
-      (isActive ? " active" : "") +
-      (isPlan ? " plan-item" : "") +
-      (isPlan && s.isCompleted ? " completed" : "") +
-      (isCodex ? " codex-item" : "") +
-      (isGemini ? " gemini-item" : "") +
-      (isAntigravity ? " antigravity-item" : "");
-
-    const badge = isPlan
-      ? (s.isCompleted
-        ? '<span class="type-badge completed">완료</span>'
-        : '<span class="type-badge plan">PLAN</span>')
-      : isCodex
-        ? `<span class="type-badge codex">${s.originator === "codex_exec" ? "EXEC" : "CODEX"}</span>`
-        : isGemini
-          ? '<span class="type-badge gemini">GEMINI</span>'
-          : isAntigravity
-            ? '<span class="type-badge antigravity">AG</span>'
-            : "";
-
-    const metaInfo = isPlan
-      ? `<span>${s.charCount || 0}자</span>`
-      : `<span>${s.userTextMessageCount || 0} 메시지</span>`;
-
-    return `
-      <div class="${itemClass}"
-           data-id="${escapeAttr(s.sessionId)}" style="height:${ITEM_HEIGHT}px;box-sizing:border-box;">
-        <div class="session-title">${escapeHtml(s.title)}${badge}</div>
-        <div class="session-preview">${escapeHtml(s.firstMessage || "")}</div>
-        <div class="session-meta">
-          <span>${dateStr} ${timeStr}</span>
-          ${metaInfo}
-          ${(s.keywords || []).map((k) => `<span class="keyword-tag">${escapeHtml(k)}</span>`).join("")}
-        </div>
-      </div>
-    `;
-  }
-
   function renderSessionList() {
     const filtered = getFilteredSessions();
-    lastFilteredSessions = filtered;
     const container = document.getElementById("sessionList");
 
     if (filtered.length === 0) {
@@ -1089,48 +1042,63 @@
       return;
     }
 
-    // 가상 스크롤 컨테이너 설정
-    const totalHeight = filtered.length * ITEM_HEIGHT;
-    container.innerHTML = `<div id="vsScrollSpacer" style="height:${totalHeight}px;position:relative;"></div>`;
-    renderVisibleItems();
+    container.innerHTML = filtered
+      .map((s) => {
+        const isActive = s.sessionId === activeSessionId;
+        const date = new Date(s.timestamp);
+        const dateStr = date.toLocaleDateString("ko-KR", {
+          year: "numeric", month: "2-digit", day: "2-digit",
+        });
+        const timeStr = date.toLocaleTimeString("ko-KR", {
+          hour: "2-digit", minute: "2-digit", hour12: false,
+        });
+
+        const isPlan = s.type === "plan";
+        const isCodex = s.type === "codex";
+        const isGemini = s.type === "gemini";
+        const isAntigravity = s.type === "antigravity";
+        const itemClass = "session-item" +
+          (isActive ? " active" : "") +
+          (isPlan ? " plan-item" : "") +
+          (isPlan && s.isCompleted ? " completed" : "") +
+          (isCodex ? " codex-item" : "") +
+          (isGemini ? " gemini-item" : "") +
+          (isAntigravity ? " antigravity-item" : "");
+
+        const badge = isPlan
+          ? (s.isCompleted
+            ? '<span class="type-badge completed">완료</span>'
+            : '<span class="type-badge plan">PLAN</span>')
+          : isCodex
+            ? `<span class="type-badge codex">${s.originator === "codex_exec" ? "EXEC" : "CODEX"}</span>`
+            : isGemini
+              ? '<span class="type-badge gemini">GEMINI</span>'
+              : isAntigravity
+                ? '<span class="type-badge antigravity">AG</span>'
+                : "";
+
+        const metaInfo = isPlan
+          ? `<span>${s.charCount || 0}자</span>`
+          : `<span>${s.userTextMessageCount || 0} 메시지</span>`;
+
+        return `
+          <div class="${itemClass}"
+               data-id="${s.sessionId}" onclick="selectSession('${escapeAttr(s.sessionId)}')">
+            <div class="session-title">${escapeHtml(s.title)}${badge}</div>
+            <div class="session-preview">${escapeHtml(s.firstMessage || "")}</div>
+            <div class="session-meta">
+              <span>${dateStr} ${timeStr}</span>
+              ${metaInfo}
+              ${(s.keywords || []).map((k) => `<span class="keyword-tag">${escapeHtml(k)}</span>`).join("")}
+            </div>
+          </div>
+        `;
+      })
+      .join("");
   }
-
-  function renderVisibleItems() {
-    const container = document.getElementById("sessionList");
-    const spacer = document.getElementById("vsScrollSpacer");
-    if (!spacer || lastFilteredSessions.length === 0) return;
-
-    const scrollTop = container.scrollTop;
-    const viewHeight = container.clientHeight;
-    const startIdx = Math.max(0, Math.floor(scrollTop / ITEM_HEIGHT) - BUFFER);
-    const endIdx = Math.min(lastFilteredSessions.length, Math.ceil((scrollTop + viewHeight) / ITEM_HEIGHT) + BUFFER);
-
-    const visibleItems = lastFilteredSessions.slice(startIdx, endIdx);
-    const offsetTop = startIdx * ITEM_HEIGHT;
-
-    spacer.innerHTML = `<div style="position:absolute;top:${offsetTop}px;left:0;right:0;">${visibleItems.map(renderSessionItem).join("")}</div>`;
-  }
-
-  // 세션 목록 스크롤 이벤트 (가상 스크롤)
-  let vsRafPending = false;
-  document.getElementById("sessionList").addEventListener("scroll", () => {
-    if (!vsRafPending) {
-      vsRafPending = true;
-      requestAnimationFrame(() => {
-        renderVisibleItems();
-        vsRafPending = false;
-      });
-    }
-  });
-
-  // 이벤트 위임: 세션 아이템 클릭
-  document.getElementById("sessionList").addEventListener("click", (e) => {
-    const item = e.target.closest("[data-id]");
-    if (item) selectSession(item.dataset.id);
-  });
 
   // ── Conversation View ──
-  window.selectSession = async function(sessionId) {
+  window.selectSession = function(sessionId) {
     activeSessionId = sessionId;
     renderSessionList();
 
@@ -1139,13 +1107,12 @@
     currentMeta = meta;
 
     if (meta.type === "plan") {
-      await showPlanDetail(meta);
+      showPlanDetail(meta);
       return;
     }
 
     const mainEl = document.getElementById("main");
-    mainEl.innerHTML = '<div style="padding:40px;text-align:center;color:#888;">로딩 중...</div>';
-    const messages = await loadConversation(sessionId);
+    const messages = loadConversation(sessionId);
 
     const duration = meta.lastTimestamp && meta.timestamp
       ? formatDuration(new Date(meta.lastTimestamp) - new Date(meta.timestamp))
@@ -1288,10 +1255,9 @@
     buildToc(tocItems);
   };
 
-  async function showPlanDetail(meta) {
+  function showPlanDetail(meta) {
     const mainEl = document.getElementById("main");
-    mainEl.innerHTML = '<div style="padding:40px;text-align:center;color:#888;">로딩 중...</div>';
-    const content = await loadConversation(meta.sessionId);
+    const content = loadConversation(meta.sessionId);
     const date = new Date(meta.timestamp);
     const dateStr = date.toLocaleDateString("ko-KR", {
       year: "numeric", month: "2-digit", day: "2-digit",
@@ -1649,9 +1615,9 @@
       .join("\n\n---\n\n");
   }
 
-  window.copyDoc = async function(btn, sessionId, detailed) {
+  window.copyDoc = function(btn, sessionId, detailed) {
     detailed = detailed === true;
-    const content = await loadConversation(sessionId);
+    const content = loadConversation(sessionId);
     const meta = currentMeta || {};
     const originalText = btn.textContent;
     let text;

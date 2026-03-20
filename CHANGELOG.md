@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-20 | revert | my-session-dashboard | 로딩 성능 최적화 원복 — 인라인 방식 복원, 서버 의존성 제거 (Gemini 캐시는 유지) |
 | 2026-03-20 | fix | my-session-dashboard | _docs 문서 내 HTML 크기 오기 수정 (8.3MB→33MB) |
 | 2026-03-20 | feat | my-session-dashboard | 전문 검색 인덱스 확장 — 도구 JSON 제외, 대화 텍스트 전체 포함 (HTML 33MB, 99MB 대비 67% 감소) |
 | 2026-03-20 | feat | my-session-dashboard | 로딩 성능 최적화 — HTML 99MB→33MB(데이터 분리+lazy load), Gemini sentinel 캐시, 가상 스크롤, 증분 빌드, 전문 검색 인덱스 |
