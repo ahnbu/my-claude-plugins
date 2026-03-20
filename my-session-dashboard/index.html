@@ -444,7 +444,7 @@
   .role-badge.user { background: #1f6feb44; color: var(--accent); }
   .role-badge.assistant { background: #3fb95033; color: var(--success); }
   .role-badge.meta { background: #8b5cf644; color: #a78bfa; }
-  .role-badge.tool-result { background: #f59e0b33; color: #fbbf24; }
+  .role-badge.tool-result { background: #6b728022; color: #9ca3af; }
 
   .message-time {
     font-size: 11px;
@@ -503,6 +503,10 @@
     font-weight: 600;
     color: var(--warning);
   }
+
+  /* 도구 응답 행 전체 뮤트 */
+  .message.tool-result-msg .tool-name { color: #9ca3af; }
+  .message.tool-result-msg .tool-block { border-color: #374151; }
 
   .tool-body {
     display: none;
@@ -1210,8 +1214,9 @@
         }
       }
 
+      const extraClass = (msg.role === "user" && msg.subtype === "tool_result") ? " tool-result-msg" : "";
       html += `
-        <div class="message ${msg.role}" id="${msgId}">
+        <div class="message ${msg.role}${extraClass}" id="${msgId}">
           <div class="message-header">
             <span class="role-badge ${roleBadgeClass}">${roleLabel}</span>
             <span class="message-time">${time}</span>
