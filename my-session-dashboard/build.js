@@ -118,7 +118,7 @@ function main() {
 
   console.log(`📦 data/: 생성 ${dataCreated}, 갱신 ${dataUpdated}, 스킵 ${dataSkipped}, 삭제 ${dataDeleted}`);
 
-  // 검색 인덱스 생성 (메타 필드 + 대화 텍스트 첫 2,000자)
+  // 검색 인덱스 생성 (메타 필드 + 대화 텍스트 전체, 도구 JSON 제외)
   const searchIndex = {};
   for (const meta of allMeta) {
     const fields = [
@@ -127,16 +127,18 @@ function main() {
       meta.projectDisplay, meta.gitBranch, meta.sessionId,
     ];
     if (meta.toolNames) fields.push(...Object.keys(meta.toolNames));
-    // 대화 내용 텍스트 추출 (전문 검색 지원)
+    // 대화 텍스트 전체 추출 (도구 JSON 제외 — 46MB/69%가 검색 가치 낮음)
     const safeId = meta.sessionId.replace(/[^a-zA-Z0-9_-]/g, "_");
     const dataFile = path.join(dataDir, `${safeId}.json`);
     try {
       const content = JSON.parse(fs.readFileSync(dataFile, "utf8"));
       if (typeof content === "string") {
-        fields.push(content.substring(0, 2000));
+        // plan: 마크다운 전체
+        fields.push(content);
       } else if (Array.isArray(content)) {
+        // session: m.text만 추출 (m.tools 제외)
         const texts = content.filter(m => m.text).map(m => m.text).join(" ");
-        fields.push(texts.substring(0, 2000));
+        fields.push(texts);
       }
     } catch {}
     searchIndex[meta.sessionId] = fields.filter(Boolean).join(" ").toLowerCase();
