@@ -18,16 +18,23 @@ plugin: my-session-wrap
 
 ### Step 1: 레포 감지 및 그룹핑
 
-현재 세션에서 변경된 파일들의 git 레포 루트를 감지한다.
+CWD에서 git 3종 스캔으로 미커밋 변경 파일을 수집하고, 각 파일의 레포 루트를 감지하여 그룹핑한다.
 
 ```bash
-# 각 변경 파일에 대해 레포 루트 감지
-git -C "<파일이 있는 디렉토리>" rev-parse --show-toplevel 2>/dev/null
+# 미커밋 변경 파일 수집 (unstaged + staged + untracked)
+{
+  git diff --name-only HEAD 2>/dev/null
+  git diff --name-only --cached 2>/dev/null
+  git ls-files --others --exclude-standard 2>/dev/null
+} | sort -u | while read f; do
+  repo=$(git -C "$(dirname "$f")" rev-parse --show-toplevel 2>/dev/null)
+  [ -n "$repo" ] && echo "$repo"
+done | sort -u
 ```
 
-1. 세션 컨텍스트에서 변경된 파일 목록을 수집
-2. 각 파일에 대해 `git rev-parse --show-toplevel`로 레포 루트 감지
-3. 레포 루트별로 파일 그룹핑
+1. 위 스크립트로 변경이 있는 레포 루트 목록을 수집
+2. 각 레포에서 `git -C "<REPO>" status --short`로 변경 파일 확인
+3. 변경이 없는 레포는 스킵
 4. git 레포에 속하지 않는 파일은 안내 후 스킵
 
 그룹핑 결과를 사용자에게 표시:
