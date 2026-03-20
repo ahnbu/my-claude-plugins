@@ -156,16 +156,15 @@
     display: none;
     position: fixed;
     right: 0;
-    top: 50%;
-    transform: translateY(-50%);
+    top: 120px;
     background: var(--bg-tertiary);
     border: 1px solid var(--border);
     border-right: none;
     border-radius: 4px 0 0 4px;
-    padding: 8px 4px;
+    padding: 10px 5px;
     cursor: pointer;
     color: var(--text-muted);
-    font-size: 11px;
+    font-size: 13px;
     writing-mode: vertical-lr;
     z-index: 10;
   }
@@ -1319,9 +1318,12 @@
       </div>`;
     }).join("");
 
-    // 항상 펼침 상태로 복원
     panel.classList.remove("hidden");
-    app.classList.remove("toc-collapsed");
+    if (localStorage.getItem("tocCollapsed") === "1") {
+      app.classList.add("toc-collapsed");
+    } else {
+      app.classList.remove("toc-collapsed");
+    }
   }
 
   function buildPlanToc(markdownText) {
@@ -1358,6 +1360,7 @@
   window.toggleToc = function() {
     const app = document.querySelector(".app");
     app.classList.toggle("toc-collapsed");
+    localStorage.setItem("tocCollapsed", app.classList.contains("toc-collapsed") ? "1" : "0");
   };
 
   window.jumpToMessage = function(msgId) {
