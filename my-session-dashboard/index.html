@@ -884,7 +884,7 @@
     }
     if (hasAntigravity) {
       typeHtml += '<button class="filter-btn" data-type-filter="antigravity">Antigravity</button>';
-      typeHtml += '<label class="codex-sub-filter" id="antigravitySubFilter"><input type="checkbox" id="antigravityCheck"> AG 포함</label>';
+      typeHtml += '<label class="codex-sub-filter" id="antigravitySubFilter"><input type="checkbox" id="antigravityCheck"> 전체 탭에도 포함</label>';
     }
     typeContainer.innerHTML = typeHtml;
 
@@ -899,10 +899,10 @@
       if (subFilter) {
         subFilter.classList.toggle("visible", activeTypeFilter === "codex");
       }
-      // Antigravity 서브필터: "전체" 탭에서만 표시
+      // Antigravity 서브필터: Antigravity 탭에서만 표시
       const agSubFilter = document.getElementById("antigravitySubFilter");
       if (agSubFilter) {
-        agSubFilter.classList.toggle("visible", activeTypeFilter === "all");
+        agSubFilter.classList.toggle("visible", activeTypeFilter === "antigravity");
       }
       renderSessionList();
     });
@@ -927,8 +927,6 @@
         localStorage.setItem("ss:showAntigravity", showAntigravity);
         renderSessionList();
       });
-      // 초기 로드 시 "전체" 탭이면 AG 서브필터 표시
-      document.getElementById("antigravitySubFilter").classList.add("visible");
     }
 
     // 프로젝트 필터 → filters 행에 렌더

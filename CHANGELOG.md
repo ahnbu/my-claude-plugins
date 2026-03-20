@@ -11,6 +11,7 @@
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
 | 2026-03-20 | refactor | my-session-dashboard | 도구 응답 행 그레이 처리 — role-badge·tool-name·tool-block 색상을 amber→gray로 변경, tool-result-msg 클래스 분리 |
+| 2026-03-20 | fix | my-session-dashboard | AG 토글 UX 개선 — 서브필터를 Antigravity 탭 클릭 시에만 표시(Codex 패턴 일치), 라벨 "전체 탭에도 포함"으로 명확화 |
 | 2026-03-20 | feat | my-session-dashboard | Antigravity 포함 토글 추가 — 전체 탭에서 AG 포함 체크박스, localStorage로 상태 유지; Codex 서브태스크도 localStorage 복원 |
 | 2026-03-20 | refactor | my-session-dashboard | stats 포맷 간결화 — `Claude(N) | Codex(N) | ...` 형식, 토큰 표시 제거 |
 | 2026-03-20 | feat | my-session-dashboard | Antigravity 필터 탭 추가 — CSS 변수·배지·세션 아이템 스타일, 타입 필터 버튼, stats 카운트, 프로젝트 필터 분기; `build.js`에 `syncAntigravity()` 호출 추가 |
