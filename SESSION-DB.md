@@ -313,6 +313,7 @@ node shared/query-sessions.js by-project "my-claude-plugins"
 
 | 날짜 | 카테고리 | 변경 내용 | 관련 커밋 |
 |------|---------|---------|----------|
+| 2026-03-20 | 동기화 | `_syncGeminiDir()` — 동일 UUID 중복 파일 sentinel 처리: `_upsertSession` 전 기존 session_id 확인, 중복 시 `gemini_excluded` sentinel로 저장하여 매빌드 "NEW" 반복 방지 | — |
 | 2026-03-20 | 동기화 | `_syncGeminiDir()` — 필터 세션 sentinel 캐시: `type='gemini_excluded'`로 DB 기록하여 재파싱 방지, 디버그 로그 추가. `getAllMeta()` — `gemini_excluded` 제외 필터 | — |
 | 2026-03-20 | 스키마·파일 맵·CLI·동기화 | Antigravity 세션 통합: `processAntigravitySession()`·`normalizeAntigravityEntries()` 파서 추가, `syncAntigravity()` 독립 메서드, `_syncAntigravityFile()` 증분 동기화, `syncSingleSession()` Antigravity 분기, `--scope antigravity` CLI 필터. `includeAntigravity` 기본 `false` (명시적 호출만) | — |
 | 2026-03-19 | 파일 맵 | `session-parser.js` — `isMeta` 엔트리 messages 제외: Skill 본문 주입 메시지 필터링 | — |

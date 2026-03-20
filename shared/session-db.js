@@ -405,6 +405,23 @@ class SessionDB {
             continue;
           }
 
+          // 동일 session_id로 이미 DB에 세션이 있으면 중복 파일 → sentinel로 저장
+          const existingSession = this.db.prepare(
+            "SELECT session_id FROM sessions WHERE session_id = ?"
+          ).get(result.metadata.sessionId);
+
+          if (existingSession) {
+            const sentinelId = "gemini_excluded:" + absPath;
+            this.db.prepare(`
+              INSERT OR REPLACE INTO sessions
+                (session_id, type, timestamp, file_path, mtime)
+              VALUES (?, 'gemini_excluded', datetime('now'), ?, ?)
+            `).run(sentinelId, absPath, mtime);
+            if (verbose) console.log(`[gemini] ${file}: duplicate UUID — sentinel saved`);
+            countCb(1, 0);
+            continue;
+          }
+
           this._upsertSession(result.metadata, mtime);
           this._upsertMessages(result.metadata.sessionId, result.messages);
           countCb(0, 1);

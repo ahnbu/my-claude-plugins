@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-20 | fix | my-session-dashboard | Gemini 중복 UUID 파일 매빌드 "신규 17" 반복 감지 수정 — 동일 session_id 중복 파일을 sentinel로 저장 |
 | 2026-03-20 | revert | my-session-dashboard | 로딩 성능 최적화 원복 — 인라인 방식 복원, 서버 의존성 제거 (Gemini 캐시는 유지) |
 | 2026-03-20 | fix | my-session-dashboard | _docs 문서 내 HTML 크기 오기 수정 (8.3MB→33MB) |
 | 2026-03-20 | feat | my-session-dashboard | 전문 검색 인덱스 확장 — 도구 JSON 제외, 대화 텍스트 전체 포함 (HTML 33MB, 99MB 대비 67% 감소) |
