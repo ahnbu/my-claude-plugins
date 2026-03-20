@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-20 | refactor | my-session-dashboard | 목차 펼치기 버튼 위치 조정 — "문서 복사" 버튼 하단으로 이동 (top: 120px → 200px) |
 | 2026-03-20 | feat | my-session-dashboard | TOC 접힘 상태 localStorage 유지 — 세션 상세 열 때 이전 접힘 상태 복원, 토글 시 저장 |
 | 2026-03-20 | refactor | my-session-dashboard | 도구 응답 행 그레이 처리 — role-badge·tool-name·tool-block 색상을 amber→gray로 변경, tool-result-msg 클래스 분리 |
 | 2026-03-20 | fix | my-session-dashboard | AG 토글 UX 개선 — 서브필터를 Antigravity 탭 클릭 시에만 표시(Codex 패턴 일치), 라벨 "전체 탭에도 포함"으로 명확화 |
