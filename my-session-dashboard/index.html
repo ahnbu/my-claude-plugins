@@ -29,6 +29,8 @@
     --codex-bg: #2a1f0a;
     --gemini-accent: #4285f4;
     --gemini-bg: #0a1a2a;
+    --antigravity-accent: #e040fb;
+    --antigravity-bg: #1a0a2a;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -621,11 +623,14 @@
   .type-badge.completed { background: var(--bg-tertiary); color: var(--text-dim); }
   .type-badge.codex { background: var(--codex-bg); color: var(--codex-accent); }
   .type-badge.gemini { background: var(--gemini-bg); color: var(--gemini-accent); }
+  .type-badge.antigravity { background: var(--antigravity-bg); color: var(--antigravity-accent); }
 
   .session-item.codex-item { border-left: 3px solid var(--codex-accent); }
   .session-item.codex-item.active { border-left: 3px solid var(--codex-accent); background: var(--bg-tertiary); }
   .session-item.gemini-item { border-left: 3px solid var(--gemini-accent); }
   .session-item.gemini-item.active { border-left: 3px solid var(--gemini-accent); background: var(--bg-tertiary); }
+  .session-item.antigravity-item { border-left: 3px solid var(--antigravity-accent); }
+  .session-item.antigravity-item.active { border-left: 3px solid var(--antigravity-accent); background: var(--bg-tertiary); }
 
   .codex-sub-filter {
     display: none;
@@ -841,6 +846,7 @@
     const planCount = sessions.filter((s) => s.type === "plan").length;
     const codexCount = sessions.filter((s) => s.type === "codex").length;
     const geminiCount = sessions.filter((s) => s.type === "gemini").length;
+    const antigravityCount = sessions.filter((s) => s.type === "antigravity").length;
     const totalTokens = sessions.reduce(
       (sum, s) => sum + (s.totalInputTokens || 0) + (s.totalOutputTokens || 0), 0
     );
@@ -852,6 +858,7 @@
     const parts = [`${sessionCount}개 Claude`];
     if (codexCount > 0) parts.push(`${codexCount}개 Codex`);
     if (geminiCount > 0) parts.push(`${geminiCount}개 Gemini`);
+    if (antigravityCount > 0) parts.push(`${antigravityCount}개 Antigravity`);
     if (planCount > 0) parts.push(`${planCount}개 Plan`);
     parts.push(`${tokenStr} 토큰`);
     document.getElementById("stats").textContent = parts.join(" | ");
@@ -866,6 +873,7 @@
     const typeContainer = document.getElementById("typeFilters");
     const hasCodex = sessions.some((s) => s.type === "codex");
     const hasGemini = sessions.some((s) => s.type === "gemini");
+    const hasAntigravity = sessions.some((s) => s.type === "antigravity");
     let typeHtml = '<button class="filter-btn active" data-type-filter="all">전체</button>';
     typeHtml += '<button class="filter-btn" data-type-filter="session">Session</button>';
     if (hasPlan) {
@@ -877,6 +885,9 @@
     }
     if (hasGemini) {
       typeHtml += '<button class="filter-btn" data-type-filter="gemini">Gemini</button>';
+    }
+    if (hasAntigravity) {
+      typeHtml += '<button class="filter-btn" data-type-filter="antigravity">Antigravity</button>';
     }
     typeContainer.innerHTML = typeHtml;
 
@@ -968,10 +979,11 @@
       if (activeTypeFilter === "plan" && sType !== "plan") return false;
       if (activeTypeFilter === "codex" && sType !== "codex") return false;
       if (activeTypeFilter === "gemini" && sType !== "gemini") return false;
+      if (activeTypeFilter === "antigravity" && sType !== "antigravity") return false;
       // Codex exec 필터: 전체/Codex 탭에서 showCodexExec=false 시 codex_exec 제외
       if (sType === "codex" && !showCodexExec && s.originator === "codex_exec") return false;
       // 프로젝트 필터 (세션/codex/gemini에 적용)
-      if (activeFilter !== "all" && (sType === "session" || sType === "codex" || sType === "gemini") && s.projectDisplay !== activeFilter) return false;
+      if (activeFilter !== "all" && (sType === "session" || sType === "codex" || sType === "gemini" || sType === "antigravity") && s.projectDisplay !== activeFilter) return false;
       if (searchQuery) {
         const terms = searchQuery.toLowerCase().split(/\s+/).filter(Boolean);
         const fields = [
@@ -1028,12 +1040,14 @@
         const isPlan = s.type === "plan";
         const isCodex = s.type === "codex";
         const isGemini = s.type === "gemini";
+        const isAntigravity = s.type === "antigravity";
         const itemClass = "session-item" +
           (isActive ? " active" : "") +
           (isPlan ? " plan-item" : "") +
           (isPlan && s.isCompleted ? " completed" : "") +
           (isCodex ? " codex-item" : "") +
-          (isGemini ? " gemini-item" : "");
+          (isGemini ? " gemini-item" : "") +
+          (isAntigravity ? " antigravity-item" : "");
 
         const badge = isPlan
           ? (s.isCompleted
@@ -1043,7 +1057,9 @@
             ? `<span class="type-badge codex">${s.originator === "codex_exec" ? "EXEC" : "CODEX"}</span>`
             : isGemini
               ? '<span class="type-badge gemini">GEMINI</span>'
-              : "";
+              : isAntigravity
+                ? '<span class="type-badge antigravity">AG</span>'
+                : "";
 
         const metaInfo = isPlan
           ? `<span>${s.charCount || 0}자</span>`
