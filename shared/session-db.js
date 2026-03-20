@@ -363,19 +363,47 @@ class SessionDB {
           const existing = this._findSessionByFilePath(absPath);
 
           if (existing && dbMtimes.get(existing.session_id) === mtime) {
+            if (verbose) console.log(`[gemini] ${file}: cached ✓`);
             countCb(1, 0);
             continue;
           }
 
+          if (verbose) {
+            const reason = !existing ? "NEW (no DB record)" : `CHANGED (mtime ${mtime} vs db ${dbMtimes.get(existing.session_id)})`;
+            console.log(`[gemini] ${file}: ${reason}`);
+          }
+
           const result = processGeminiSession(absPath, projectRoot);
-          if (!result || result.metadata.userEntryCount === 0) continue;
 
-          // 자동 호출 세션 제외: (codex) / (claude) 태그 감지
-          if (result.metadata.firstMessage && /\((codex|claude)\)/i.test(result.metadata.firstMessage)) continue;
+          // 필터 조건에 걸리는 세션도 sentinel 레코드로 저장하여 재파싱 방지
+          let excluded = false;
+          let excludeReason = "";
 
-          // 자동 호출 세션 제외: 60초 미만 세션 스킵
-          const durationSec = (new Date(result.metadata.lastTimestamp) - new Date(result.metadata.timestamp)) / 1000;
-          if (durationSec < 60) continue;
+          if (!result || result.metadata.userEntryCount === 0) {
+            excluded = true;
+            excludeReason = "no user entries";
+          } else if (result.metadata.firstMessage && /\((codex|claude)\)/i.test(result.metadata.firstMessage)) {
+            excluded = true;
+            excludeReason = "auto-call session";
+          } else {
+            const durationSec = (new Date(result.metadata.lastTimestamp) - new Date(result.metadata.timestamp)) / 1000;
+            if (durationSec < 60) {
+              excluded = true;
+              excludeReason = `duration ${Math.round(durationSec)}s < 60s`;
+            }
+          }
+
+          if (excluded) {
+            // sentinel 레코드: mtime만 기록하여 다음 빌드에서 캐시 히트
+            const sentinelId = "gemini_excluded:" + absPath;
+            this.db.prepare(`
+              INSERT OR REPLACE INTO sessions
+                (session_id, type, timestamp, file_path, mtime)
+              VALUES (?, 'gemini_excluded', datetime('now'), ?, ?)
+            `).run(sentinelId, absPath, mtime);
+            if (verbose) console.log(`[gemini] ${file}: excluded (${excludeReason}) — sentinel saved`);
+            continue;
+          }
 
           this._upsertSession(result.metadata, mtime);
           this._upsertMessages(result.metadata.sessionId, result.messages);
@@ -556,7 +584,7 @@ class SessionDB {
    * @returns {object[]}
    */
   getAllMeta() {
-    const rows = this.db.prepare("SELECT * FROM sessions ORDER BY timestamp DESC").all();
+    const rows = this.db.prepare("SELECT * FROM sessions WHERE type != 'gemini_excluded' ORDER BY timestamp DESC").all();
     return rows.map(row => this._rowToMeta(row));
   }
 

@@ -140,6 +140,26 @@ function handleRequest(req, res) {
     return;
   }
 
+  // data/*.json — 세션별 메시지 데이터 서빙
+  if (req.url.startsWith('/data/') && req.url.endsWith('.json')) {
+    const dataDir = path.join(path.dirname(OUTPUT_HTML), 'data');
+    const fileName = path.basename(req.url);
+    // 경로 순회 공격 방지: basename만 사용
+    const filePath = path.join(dataDir, fileName);
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath);
+      res.writeHead(200, {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Cache-Control': 'public, max-age=300',
+      });
+      res.end(content);
+    } else {
+      res.writeHead(404);
+      res.end('Not found');
+    }
+    return;
+  }
+
   res.writeHead(404);
   res.end('Not found');
 }
