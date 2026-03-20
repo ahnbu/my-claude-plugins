@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-20 | docs | - | SESSION-DB.md 개요에 데이터 계층 비교표 2개 추가 — JSONL raw → DB 계층별 용도·크기(100%→1-12% 압축), messages vs events 세부 구성(저장 여부·용량) |
 | 2026-03-20 | fix | my-session-dashboard | Gemini 중복 UUID 파일 매빌드 "신규 17" 반복 감지 수정 — 동일 session_id 중복 파일을 sentinel로 저장 |
 | 2026-03-20 | revert | my-session-dashboard | 로딩 성능 최적화 원복 — 인라인 방식 복원, 서버 의존성 제거 (Gemini 캐시는 유지) |
 | 2026-03-20 | fix | my-session-dashboard | _docs 문서 내 HTML 크기 오기 수정 (8.3MB→33MB) |

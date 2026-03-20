@@ -21,6 +21,38 @@ Claude/Plan/Codex/Gemini/**Antigravity** 소스를 SQLite로 통합하여 세션
 | 저널 모드 | WAL |
 | DB 경로 (정본) | `output/session-dashboard/sessions.db` (`__dirname` 상대경로 기준) |
 
+### 데이터 계층 요약
+
+JSONL raw → DB 계층별 용도·크기 비교. (최근 100개 claude 세션 평균, 2026-03-20 기준)
+
+| 계층 | 용도 | 포함 내용 | 평균 | 중앙값 | 원본 대비 |
+|------|------|-----------|------|--------|-----------|
+| JSONL raw | 원본 보존 | 전체 (thinking, system-reminder, 캐시 메타, 중복 포함) | 2,797KB | 506KB | 100% |
+| sessions | ✅ 검색·통계 | 메타데이터 + 집계 (토큰, 도구, 모델, 프로젝트) | ~1KB | ~1KB | <1% |
+| messages | ✅ 대화 뷰 | user/assistant 텍스트 (턴 단위, 도구 노이즈 제외) | 8KB | 3KB | 2% |
+| events | 타임라인 | 모든 이벤트 정규화 (대화 + 도구 결과 + progress) | 317KB | 60KB | 12% |
+
+- **DB에 없는 것**: thinking 전문, system-reminder, 캐시 메타데이터
+
+### messages vs events 세부 구성
+
+각 구성요소의 저장 방식과 용량 비교. (events가 있는 76개 세션 평균, 2026-03-20 기준)
+
+| 항목 | messages | 용량 | events | 용량 |
+|------|----------|------|--------|------|
+| 사용자 입력 전문 | ✅ 텍스트 있는 턴 전체 | 3KB | ✅ 전체 (스킬 본문 포함) | 15KB |
+| assistant 응답 전문 | ✅ 텍스트 있는 턴 전체 | 4KB | ✅ 전체 | 11KB |
+| 도구 호출 내역 | ⚠️ tools JSON 메타 | (text 미포함) | ✅ 이름+input 요약 | 46KB |
+| 도구 결과 | ❌ text NULL | 0KB | ✅ 전체 | 221KB |
+| 사고 과정 (thinking) | ❌ | 0KB | ❌ | 0KB |
+| progress/훅 | ❌ | 0KB | ✅ | 22KB |
+| turn_duration | ❌ | 0KB | ✅ | 0.1KB |
+| **합계** | | **~8KB** | | **~317KB** |
+
+- messages의 user 입력이 events보다 작은 이유: 스킬 본문 주입(isMeta)이 meta subtype으로 분류되어 제외
+- assistant text NULL 턴: 도구만 호출하고 텍스트 응답이 없는 턴 (설계 의도)
+- 용도별 선택: 대화 흐름만 필요 → messages (2%), 전체 타임라인 재구성 → events (12%)
+
 ---
 
 ## 2. 스키마 레퍼런스
@@ -313,6 +345,7 @@ node shared/query-sessions.js by-project "my-claude-plugins"
 
 | 날짜 | 카테고리 | 변경 내용 | 관련 커밋 |
 |------|---------|---------|----------|
+| 2026-03-20 | 설명 | §1 개요에 데이터 계층 비교표 2개 추가 (JSONL→DB 계층별 용도·크기, messages vs events 세부 구성) | — |
 | 2026-03-20 | 동기화 | `_syncGeminiDir()` — 동일 UUID 중복 파일 sentinel 처리: `_upsertSession` 전 기존 session_id 확인, 중복 시 `gemini_excluded` sentinel로 저장하여 매빌드 "NEW" 반복 방지 | — |
 | 2026-03-20 | 동기화 | `_syncGeminiDir()` — 필터 세션 sentinel 캐시: `type='gemini_excluded'`로 DB 기록하여 재파싱 방지, 디버그 로그 추가. `getAllMeta()` — `gemini_excluded` 제외 필터 | — |
 | 2026-03-20 | 스키마·파일 맵·CLI·동기화 | Antigravity 세션 통합: `processAntigravitySession()`·`normalizeAntigravityEntries()` 파서 추가, `syncAntigravity()` 독립 메서드, `_syncAntigravityFile()` 증분 동기화, `syncSingleSession()` Antigravity 분기, `--scope antigravity` CLI 필터. `includeAntigravity` 기본 `false` (명시적 호출만) | — |
