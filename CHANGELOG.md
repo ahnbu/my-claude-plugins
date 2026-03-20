@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-20 | refactor | my-session-dashboard | stats 포맷 간결화 — `Claude(N) | Codex(N) | ...` 형식, 토큰 표시 제거 |
 | 2026-03-20 | feat | my-session-dashboard | Antigravity 필터 탭 추가 — CSS 변수·배지·세션 아이템 스타일, 타입 필터 버튼, stats 카운트, 프로젝트 필터 분기; `build.js`에 `syncAntigravity()` 호출 추가 |
 | 2026-03-20 | refactor | my-session-wrap | `/cp` Step 1 레포 감지 로직 개선 — CWD 기준 git 3종 스캔(unstaged+staged+untracked)으로 미커밋 변경 파일 수집 후 레포 루트별 그룹핑 |
 | 2026-03-20 | feat | shared | Antigravity IDE 대화 세션DB 통합 — `session-parser.js`에 `processAntigravitySession()`·`normalizeAntigravityEntries()` 추가, `session-db.js`에 `syncAntigravity()`·`_syncAntigravityFile()` 추가, `query-sessions.js`에 `--scope antigravity` 필터 추가. export JSON 기반 증분 동기화 |

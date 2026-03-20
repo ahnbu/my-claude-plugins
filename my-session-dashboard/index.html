@@ -847,20 +847,11 @@
     const codexCount = sessions.filter((s) => s.type === "codex").length;
     const geminiCount = sessions.filter((s) => s.type === "gemini").length;
     const antigravityCount = sessions.filter((s) => s.type === "antigravity").length;
-    const totalTokens = sessions.reduce(
-      (sum, s) => sum + (s.totalInputTokens || 0) + (s.totalOutputTokens || 0), 0
-    );
-    const tokenStr = totalTokens > 1_000_000
-      ? (totalTokens / 1_000_000).toFixed(1) + "M"
-      : totalTokens > 1_000
-      ? (totalTokens / 1_000).toFixed(0) + "K"
-      : totalTokens;
-    const parts = [`${sessionCount}개 Claude`];
-    if (codexCount > 0) parts.push(`${codexCount}개 Codex`);
-    if (geminiCount > 0) parts.push(`${geminiCount}개 Gemini`);
-    if (antigravityCount > 0) parts.push(`${antigravityCount}개 Antigravity`);
-    if (planCount > 0) parts.push(`${planCount}개 Plan`);
-    parts.push(`${tokenStr} 토큰`);
+    const parts = [`Claude(${sessionCount})`];
+    if (codexCount > 0) parts.push(`Codex(${codexCount})`);
+    if (geminiCount > 0) parts.push(`Gemini(${geminiCount})`);
+    if (antigravityCount > 0) parts.push(`Antigravity(${antigravityCount})`);
+    if (planCount > 0) parts.push(`Plan(${planCount})`);
     document.getElementById("stats").textContent = parts.join(" | ");
   }
 
