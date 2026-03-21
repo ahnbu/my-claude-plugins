@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-21 | docs | - | 사이드바 토글 성능 개선 의사결정 기록 — grid-template-columns Layout transition 제거, transform: translateX로 GPU 슬라이드 전환. 두 방식 비교(속도·효과·복잡도), 설계 결정(JS 핵 제거) 문서화 |
 | 2026-03-21 | feat | - | 세션 대시보드 UI 개선 및 상태 추적 시스템 추가 — index.html 검색 UI 개선(89줄), .pdca-status.json 상태 파일 신규, SESSION-DB.md 테이블 순서 정렬, sidebar 스크린샷 3종 추가 |
 | 2026-03-21 | fix | my-session-dashboard | 검색 잘림(substring 10000/2000) 제거 — 26% 세션(574개) 검색 누락 해소 |
 | 2026-03-20 | docs | - | 세션 대시보드 과최적화 원복 작업 기록 — Phase 2+3 취소 결정, 변경 분석, 의사결정 근거, Gemini 중복 UUID 수정 검증 |
