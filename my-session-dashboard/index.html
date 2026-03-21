@@ -49,11 +49,17 @@
     grid-template-columns: 380px 1fr 380px;
     grid-template-rows: auto auto auto 1fr;
     height: 100vh;
-    transition: grid-template-columns 0.2s ease;
   }
 
   .app.toc-collapsed {
     grid-template-columns: 380px 1fr 0px;
+  }
+
+  .app.sidebar-collapsed {
+    grid-template-columns: 0px 1fr 380px;
+  }
+  .app.sidebar-collapsed.toc-collapsed {
+    grid-template-columns: 0px 1fr 0px;
   }
 
   /* TOC panel — mirrors sidebar */
@@ -64,6 +70,11 @@
     flex-direction: column;
     overflow: hidden;
     grid-row: 4;
+    transition: transform 0.2s ease;
+    will-change: transform;
+  }
+  .app.toc-collapsed .toc-panel {
+    transform: translateX(100%);
   }
 
   .toc-panel.hidden {
@@ -176,6 +187,57 @@
 
   .app.toc-collapsed .toc-reopen {
     display: block;
+  }
+
+  /* Sidebar collapsed: show a thin re-open tab */
+  .sidebar-reopen {
+    display: none;
+    position: fixed;
+    left: 0;
+    top: 200px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-left: none;
+    border-radius: 0 4px 4px 0;
+    padding: 10px 5px;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 13px;
+    writing-mode: vertical-lr;
+    z-index: 10;
+  }
+  .sidebar-reopen:hover {
+    color: var(--text);
+    background: var(--bg-secondary);
+  }
+  .app.sidebar-collapsed .sidebar-reopen {
+    display: block;
+  }
+
+  /* Sidebar header */
+  .sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+  .sidebar-toggle-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 18px;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .sidebar-toggle-btn:hover {
+    color: var(--text);
+    background: var(--bg-tertiary);
   }
 
   /* Header */
@@ -304,11 +366,17 @@
     grid-row: 4;
     background: var(--bg-secondary);
     border-right: 1px solid var(--border);
-    overflow-y: auto;
+    overflow: hidden;
+    min-width: 0;
     display: flex;
     flex-direction: column;
+    transition: transform 0.2s ease;
+    will-change: transform;
   }
-
+  .app.sidebar-collapsed .sidebar {
+    transform: translateX(-100%);
+    border-right: none;
+  }
   .session-list {
     flex: 1;
     overflow-y: auto;
@@ -789,6 +857,10 @@
   <div class="filters" id="filters"></div>
 
   <div class="sidebar">
+    <div class="sidebar-header">
+      <span>세션 목록</span>
+      <button class="sidebar-toggle-btn" onclick="toggleSidebar()" title="사이드바 접기">&#x00D7;</button>
+    </div>
     <div class="session-list" id="sessionList">
       <div class="loading">세션 로딩 중...</div>
     </div>
@@ -810,6 +882,7 @@
   </div>
 
   <button class="toc-reopen" id="tocReopen" onclick="toggleToc()" title="목차 펼치기">목차</button>
+  <button class="sidebar-reopen" id="sidebarReopen" onclick="toggleSidebar()" title="세션 목록 펼치기">세션</button>
 </div>
 
 <!-- __SESSION_DATA__ -->
@@ -822,6 +895,10 @@
   let activeTypeFilter = "all";
   let searchQuery = "";
   let showCodexExec = localStorage.getItem("ss:showCodexExec") === "true";
+
+  if (localStorage.getItem("sidebarCollapsed") === "1") {
+    document.querySelector(".app").classList.add("sidebar-collapsed");
+  }
   let showAntigravity = localStorage.getItem("ss:showAntigravity") === "true";
 
   const ROLE_LABELS = { user: "사용자", assistant: "어시스턴트" };
@@ -1361,6 +1438,12 @@
     const app = document.querySelector(".app");
     app.classList.toggle("toc-collapsed");
     localStorage.setItem("tocCollapsed", app.classList.contains("toc-collapsed") ? "1" : "0");
+  };
+
+  window.toggleSidebar = function() {
+    const app = document.querySelector(".app");
+    app.classList.toggle("sidebar-collapsed");
+    localStorage.setItem("sidebarCollapsed", app.classList.contains("sidebar-collapsed") ? "1" : "0");
   };
 
   window.jumpToMessage = function(msgId) {

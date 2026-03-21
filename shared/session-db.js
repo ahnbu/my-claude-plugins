@@ -776,6 +776,18 @@ class SessionDB {
     const mainEvents = normalizeEntries(mainEntries, "main", "");
     this._upsertEvents(sessionId, "", mainEvents);
 
+    // sessions 테이블에도 메타데이터 upsert (syncSingleSession 누락 수정)
+    try {
+      const result = processSession(mainFilePath);
+      if (result && result.metadata) {
+        result.metadata.type = "session";
+        const mtime = fs.statSync(mainFilePath).mtimeMs;
+        this._upsertSession(result.metadata, mtime);
+      }
+    } catch (err) {
+      // sessions upsert 실패해도 events는 이미 저장됨 — 무시
+    }
+
     // 서브에이전트
     const subagentsDir = path.join(path.dirname(mainFilePath), sessionId, "subagents");
     if (fs.existsSync(subagentsDir)) {
