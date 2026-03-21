@@ -227,8 +227,8 @@ server.listen(0, () => {
   const url = `http://127.0.0.1:${port}`;
   console.log(`[serve] 서버 실행: ${url}`);
 
-  // 브라우저 열기 (Windows) — "" 빈 타이틀로 URL 모호성 방지
-  exec(`start "" "${url}"`, err => {
+  // 브라우저 열기 — PowerShell Start-Process로 cmd 창 없이 실행
+  exec(`powershell -NoProfile -Command "Start-Process '${url}'"`, err => {
     if (err) console.error('[serve] 브라우저 열기 실패:', err.message);
   });
 
