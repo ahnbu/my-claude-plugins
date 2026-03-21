@@ -1016,14 +1016,14 @@
         const conv = loadConversation(s.sessionId);
         if (typeof conv === "string") {
           // plan: markdown content
-          fields.push(conv.substring(0, 2000));
+          fields.push(conv);
         } else if (Array.isArray(conv)) {
           // session: messages 배열에서 텍스트 추출
           const texts = conv
             .filter(m => m.text)
             .map(m => m.text)
             .join(" ");
-          fields.push(texts.substring(0, 10000));
+          fields.push(texts);
         }
         const searchable = fields.join(" ").toLowerCase();
         // 공백으로 분리된 각 단어가 모두 포함되어야 함 (AND 검색)
