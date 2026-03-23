@@ -17,24 +17,30 @@ description: "경량 commit-push — 변경사항 분석 → 커밋 → 푸쉬 (
 
 ### Step 1: 레포 감지 및 그룹핑
 
-CWD에서 git 3종 스캔으로 미커밋 변경 파일을 수집하고, 각 파일의 레포 루트를 감지하여 그룹핑한다.
+세션에서 변경/생성한 파일 경로를 기준으로 소속 git 레포를 감지하고 그룹핑한다.
+
+#### 1-1. 변경 파일 기준 레포 감지
+
+세션에서 변경·생성한 파일들의 **고유 디렉토리 목록**을 먼저 도출한 뒤, 각 디렉토리에서 레포를 찾는다:
+
+1. 변경 파일 경로 → `dirname` → 중복 제거 → 고유 디렉토리 set
+2. 각 디렉토리에서 `git rev-parse --show-toplevel` → 레포 루트 감지
+3. 레포 루트 중복 제거
 
 ```bash
-# 미커밋 변경 파일 수집 (unstaged + staged + untracked)
-{
-  git diff --name-only HEAD 2>/dev/null
-  git diff --name-only --cached 2>/dev/null
-  git ls-files --others --exclude-standard 2>/dev/null
-} | sort -u | while read f; do
-  repo=$(git -C "$(dirname "$f")" rev-parse --show-toplevel 2>/dev/null)
-  [ -n "$repo" ] && echo "$repo"
-done | sort -u
+# 고유 디렉토리별 1회만 실행
+git -C "<디렉토리>" rev-parse --show-toplevel 2>/dev/null
 ```
 
-1. 위 스크립트로 변경이 있는 레포 루트 목록을 수집
-2. 각 레포에서 `git -C "<REPO>" status --short`로 변경 파일 확인
-3. 변경이 없는 레포는 스킵
-4. git 레포에 속하지 않는 파일은 안내 후 스킵
+- git 레포에 속하지 않는 디렉토리 → "git 레포 아님 — 스킵" 안내
+
+#### 1-2. 레포별 변경 확인
+
+각 레포에서 전체 변경 파일을 확인한다:
+
+```bash
+git -C "<REPO>" status --porcelain
+```
 
 그룹핑 결과를 사용자에게 표시:
 ```
