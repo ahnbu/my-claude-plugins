@@ -144,6 +144,28 @@ test("buildTranscript respects tool result filtering options", () => {
   assert.equal(transcript.entries.some((entry) => entry.kind === "plan_content"), true);
 });
 
-// CLI 테스트 삭제: session-timeline/session-transcript 스킬이
-// 대시보드에 통합되어 스킬 디렉토리가 제거됨 (2026-03-23).
-// lib/session/ 라이브러리 테스트(위의 buildTimeline/buildTranscript)는 유지.
+test("session_timeline CLI prints JSON for the requested session", () => {
+  const cliPath = path.join(
+    __dirname,
+    "..",
+    "skills",
+    "session-timeline",
+    "scripts",
+    "session_timeline.js"
+  );
+
+  const raw = execFileSync(process.execPath, [
+    cliPath,
+    sessionId,
+    "--format",
+    "json",
+    "--claude-projects-dir",
+    fixtureRoot,
+  ], { encoding: "utf8" });
+
+  const parsed = JSON.parse(raw);
+  assert.equal(parsed.sessionId, sessionId);
+  assert.equal(parsed.summary.totalToolWaitMs, 12000);
+});
+
+// session-transcript CLI 테스트: session-transcript 스킬 미복구로 생략

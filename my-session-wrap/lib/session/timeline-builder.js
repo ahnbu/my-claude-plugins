@@ -126,8 +126,8 @@ function renderTimelineMarkdown(timeline) {
     lines.push("도구 호출 없음", "");
   } else {
     lines.push(
-      "| # | 시각 | 간격 | 도구 | 입력 | 대기 | 상태 | 결과 요약 |",
-      "|---|------|------|------|------|------|------|-----------|"
+      "| # | 시각 | 간격 | 도구 | 입력 | 소요 | 대기 | 상태 | 결과 요약 |",
+      "|---|------|------|------|------|------|------|------|-----------|"
     );
     for (let i = 0; i < toolCalls.length; i++) {
       const toolCall = toolCalls[i];
@@ -137,8 +137,14 @@ function renderTimelineMarkdown(timeline) {
       const prevSeconds = i === 0 ? 0 : clockToSeconds(toolCalls[i - 1].startClock);
       const gap = formatDuration((clockToSeconds(toolCall.startClock) - prevSeconds) * 1000);
       const inputCtx = getToolContext(toolCall.input).replace(/\|/g, "\\|").slice(0, 40);
+      // 소요: 현재 도구 시작 → 다음 도구 시작 (마지막은 세션 종료까지)
+      const nextStart = i < toolCalls.length - 1
+        ? clockToSeconds(toolCalls[i + 1].startClock)
+        : summary.sessionElapsedMs / 1000;
+      const currentStart = clockToSeconds(toolCall.startClock);
+      const stepDuration = formatDuration((nextStart - currentStart) * 1000);
       lines.push(
-        `| ${i + 1} | ${toolCall.startClock} | ${gap} | ${shortName} | ${inputCtx} | ${wait} | ${toolCall.status} | ${preview} |`
+        `| ${i + 1} | ${toolCall.startClock} | ${gap} | ${shortName} | ${inputCtx} | ${stepDuration} | ${wait} | ${toolCall.status} | ${preview} |`
       );
     }
     lines.push("");
