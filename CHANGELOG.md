@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-23 | docs | - | 커맨드 스킬 래퍼 패턴 전환 의사결정 기록 |
 | 2026-03-23 | refactor | - | `my-session-wrap` 커맨드를 스킬 래퍼 패턴으로 전환 — wrap/continue/cp 커맨드를 SKILL.md 참조 래퍼로 교체, history-insight 커맨드 신규 생성, save 커맨드 폐기(temp 이동), allowed-tools 제거 |
 | 2026-03-21 | feat | - | 대시보드 실행 시 터미널 창 숨김 — session.vbs 래퍼 추가, serve.js 브라우저 열기를 PowerShell Start-Process로 변경, 바로가기(.lnk) wscript.exe 연결 |
 | 2026-03-21 | docs | - | 사이드바 토글 성능 개선 의사결정 기록 — grid-template-columns Layout transition 제거, transform: translateX로 GPU 슬라이드 전환. 두 방식 비교(속도·효과·복잡도), 설계 결정(JS 핵 제거) 문서화 |
