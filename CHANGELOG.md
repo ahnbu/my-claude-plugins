@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-23 | feat | 1.5.0 | `my-session-dashboard` 온디맨드 타임라인 — 세션 상세 패널에 "타임라인" 버튼 추가, serve.js에 `/api/timeline/:sessionId` API 엔드포인트 구현, 모달에 요약 통계·도구 호출·서브에이전트 테이블 표시, 빌드 후 자동 종료를 5분 idle timeout으로 변경 |
 | 2026-03-23 | refactor | - | `my-session-wrap` 사장 스킬 정리 — session-timeline/session-transcript 스킬 삭제(기법은 대시보드에 흡수), CLI 테스트 2개 제거, session-analyzer 보류(코드 유지) |
 | 2026-03-23 | feat | - | `shared` error_count DB 컬럼 추가 — session-parser에 errorCount 카운트, session-db에 ALTER TABLE 마이그레이션, 대시보드 세션 목록에 도구 수/에러 수 배지 표시 |
 | 2026-03-23 | feat | - | `my-session-dashboard` 메시지 뷰 개선 — shortenToolName() MCP 도구명 축약, toolSummary() MCP 폴백, 도구 응답 필터 드롭다운(전체/숨김/에러만) 추가 |

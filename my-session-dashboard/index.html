@@ -826,6 +826,60 @@
   .copy-doc-btn:hover { background: #1f6feb44; border-color: var(--accent); }
   .copy-doc-btn.copied { background: #3fb95022; border-color: var(--success); color: var(--success); }
 
+  /* 타임라인 모달 */
+  .timeline-modal-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: #000a; z-index: 10000; display: flex;
+    align-items: center; justify-content: center;
+  }
+  .timeline-modal {
+    background: var(--bg-secondary); border: 1px solid var(--border);
+    border-radius: 12px; width: min(90vw, 1000px); max-height: 85vh;
+    display: flex; flex-direction: column; box-shadow: 0 8px 32px #000a;
+  }
+  .timeline-modal-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px; border-bottom: 1px solid var(--border);
+  }
+  .timeline-modal-header h3 { margin: 0; font-size: 16px; color: var(--text); }
+  .timeline-modal-close {
+    background: none; border: none; color: var(--text-muted); font-size: 20px;
+    cursor: pointer; padding: 4px 8px; border-radius: 4px;
+  }
+  .timeline-modal-close:hover { background: var(--bg-tertiary); color: var(--text); }
+  .timeline-modal-body {
+    padding: 20px; overflow-y: auto; flex: 1;
+  }
+  .timeline-summary {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px; margin-bottom: 20px;
+  }
+  .timeline-stat {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 12px; text-align: center;
+  }
+  .timeline-stat .stat-value { font-size: 20px; font-weight: 700; color: var(--accent); }
+  .timeline-stat .stat-label { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+  .timeline-table {
+    width: 100%; border-collapse: collapse; font-size: 12px;
+  }
+  .timeline-table th {
+    text-align: left; padding: 8px 10px; background: var(--bg);
+    border-bottom: 2px solid var(--border); color: var(--text-muted);
+    font-weight: 600; position: sticky; top: 0;
+  }
+  .timeline-table td {
+    padding: 6px 10px; border-bottom: 1px solid var(--border);
+    color: var(--text); white-space: nowrap;
+  }
+  .timeline-table td.wrap { white-space: normal; word-break: break-all; max-width: 200px; }
+  .timeline-table tr:hover td { background: var(--bg); }
+  .timeline-table .status-ok { color: var(--success); }
+  .timeline-table .status-error { color: #f85149; }
+  .timeline-table .status-pending { color: var(--warning); }
+  .timeline-loading { text-align: center; padding: 40px; color: var(--text-muted); }
+  .timeline-error { text-align: center; padding: 40px; color: #f85149; }
+
   /* 복사 완료 토스트 */
   .copy-toast {
     position: fixed;
@@ -1270,7 +1324,7 @@
     const sessionFilePath = meta.filePath || "";
     let html = `
       <div class="detail-header">
-        <h2>${escapeHtml(meta.title)} <button class="copy-doc-btn" onclick="copyDoc(this, '${escapeAttr(meta.sessionId)}', false)">문서 복사</button> <button class="copy-doc-btn" onclick="copyDoc(this, '${escapeAttr(meta.sessionId)}', true)">문서 복사 (상세)</button></h2>
+        <h2>${escapeHtml(meta.title)} <button class="copy-doc-btn" onclick="copyDoc(this, '${escapeAttr(meta.sessionId)}', false)">문서 복사</button> <button class="copy-doc-btn" onclick="copyDoc(this, '${escapeAttr(meta.sessionId)}', true)">문서 복사 (상세)</button>${meta.type !== "plan" ? ` <button class="copy-doc-btn" onclick="showTimeline('${escapeAttr(meta.sessionId)}')">타임라인</button>` : ""}</h2>
         <div class="detail-meta">
           <span><span class="label">프로젝트:</span> ${escapeHtml(meta.projectDisplay || "-")}</span>
           <span><span class="label">브랜치:</span> ${escapeHtml(meta.gitBranch || "-")}</span>
@@ -1867,6 +1921,10 @@
       e.preventDefault();
       searchInput.focus();
     }
+    if (e.key === "Escape") {
+      const modal = document.querySelector(".timeline-modal-overlay");
+      if (modal) { modal.remove(); return; }
+    }
     if (e.key === "Escape" && document.activeElement === searchInput) {
       const now = Date.now();
       if (now - lastEscTime < 300) {
@@ -1879,6 +1937,117 @@
       searchInput.blur();
     }
   });
+
+  // ── Timeline Modal ──
+  window.showTimeline = async function(sessionId) {
+    // 모달 생성
+    const overlay = document.createElement("div");
+    overlay.className = "timeline-modal-overlay";
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+    overlay.innerHTML = `
+      <div class="timeline-modal">
+        <div class="timeline-modal-header">
+          <h3>세션 타임라인</h3>
+          <button class="timeline-modal-close" onclick="this.closest('.timeline-modal-overlay').remove()">&times;</button>
+        </div>
+        <div class="timeline-modal-body">
+          <div class="timeline-loading">타임라인 로딩 중...</div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    const body = overlay.querySelector(".timeline-modal-body");
+    try {
+      const res = await fetch("/api/timeline/" + sessionId);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: res.statusText }));
+        body.innerHTML = `<div class="timeline-error">타임라인 로드 실패: ${escapeHtml(err.error || "알 수 없는 오류")}</div>`;
+        return;
+      }
+      const tl = await res.json();
+      body.innerHTML = renderTimeline(tl);
+    } catch (err) {
+      body.innerHTML = `<div class="timeline-error">서버 연결 실패 — serve.js가 실행 중인지 확인하세요.</div>`;
+    }
+  };
+
+  function renderTimeline(tl) {
+    const s = tl.summary;
+    const fmtMs = (ms) => {
+      if (ms == null) return "-";
+      const sec = Math.floor(ms / 1000);
+      if (sec < 60) return sec + "초";
+      const min = Math.floor(sec / 60);
+      if (min < 60) return min + "분 " + (sec % 60) + "초";
+      const hr = Math.floor(min / 60);
+      return hr + "시간 " + (min % 60) + "분";
+    };
+
+    let html = `
+      <div class="timeline-summary">
+        <div class="timeline-stat"><div class="stat-value">${fmtMs(s.sessionElapsedMs)}</div><div class="stat-label">세션 소요</div></div>
+        <div class="timeline-stat"><div class="stat-value">${fmtMs(s.totalTurnDurationMs)}</div><div class="stat-label">AI 턴 소요</div></div>
+        <div class="timeline-stat"><div class="stat-value">${fmtMs(s.totalToolWaitMs)}</div><div class="stat-label">도구 대기</div></div>
+        <div class="timeline-stat"><div class="stat-value">${tl.toolCalls.length}</div><div class="stat-label">도구 호출</div></div>
+        <div class="timeline-stat"><div class="stat-value">${tl.subagentSpans.length}</div><div class="stat-label">서브에이전트</div></div>
+      </div>
+    `;
+
+    // 도구 호출 테이블
+    if (tl.toolCalls.length > 0) {
+      html += `<table class="timeline-table"><thead><tr>
+        <th>#</th><th>시각</th><th>도구</th><th>입력</th><th>대기</th><th>상태</th><th>결과</th>
+      </tr></thead><tbody>`;
+      for (let i = 0; i < tl.toolCalls.length; i++) {
+        const tc = tl.toolCalls[i];
+        const statusClass = tc.status === "ok" ? "status-ok" : tc.status === "error" ? "status-error" : "status-pending";
+        const inputCtx = getTimelineToolContext(tc);
+        const preview = (tc.resultPreview || "").substring(0, 60);
+        html += `<tr>
+          <td>${i + 1}</td>
+          <td>${escapeHtml(tc.startClock)}</td>
+          <td>${escapeHtml(shortenToolName(tc.toolName))}</td>
+          <td class="wrap" title="${escapeAttr(JSON.stringify(tc.input || {}))}">${escapeHtml(inputCtx)}</td>
+          <td>${tc.waitMs != null ? fmtMs(tc.waitMs) : "-"}</td>
+          <td class="${statusClass}">${tc.status}</td>
+          <td class="wrap" title="${escapeAttr(preview)}">${escapeHtml(preview)}</td>
+        </tr>`;
+      }
+      html += "</tbody></table>";
+    }
+
+    // 서브에이전트 스팬
+    if (tl.subagentSpans.length > 0) {
+      html += `<h4 style="margin:20px 0 8px;color:var(--text-muted)">서브에이전트</h4>`;
+      html += `<table class="timeline-table"><thead><tr>
+        <th>Agent</th><th>시작</th><th>종료</th><th>소요</th>
+      </tr></thead><tbody>`;
+      for (const sa of tl.subagentSpans) {
+        html += `<tr>
+          <td>${escapeHtml(sa.agentId)}</td>
+          <td>${escapeHtml(sa.startClock)}</td>
+          <td>${escapeHtml(sa.endClock)}</td>
+          <td>${fmtMs(sa.spanMs)}</td>
+        </tr>`;
+      }
+      html += "</tbody></table>";
+    }
+
+    return html;
+  }
+
+  function getTimelineToolContext(tc) {
+    if (!tc.input) return "";
+    const i = tc.input;
+    if (i.file_path) return i.file_path.split(/[/\\]/).slice(-2).join("/");
+    if (i.command) return i.command.substring(0, 50);
+    if (i.pattern) return i.pattern;
+    if (i.prompt) return i.prompt.substring(0, 50);
+    if (i.description) return i.description.substring(0, 50);
+    const first = Object.values(i)[0];
+    return typeof first === "string" ? first.substring(0, 40) : "";
+  }
 
   // ── Init ──
   loadSessions();

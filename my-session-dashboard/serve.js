@@ -3,7 +3,8 @@
  * - 기존 index.html 즉시 서빙 (프로그레스바 주입)
  * - SSE로 빌드 진행 상황 전송
  * - 빌드 완료 후 브라우저 리로드
- * - 리로드 후 5초 뒤 자동 종료
+ * - Timeline API 제공 (/api/timeline/:sessionId)
+ * - 5분 idle timeout 후 자동 종료
  */
 
 const http = require('http');
@@ -16,9 +17,33 @@ const PLUGIN_DIR = __dirname;
 // → my-claude-plugins/output/session-dashboard/index.html (PLUGIN_DIR 한 단계 위)
 const OUTPUT_HTML = path.join(PLUGIN_DIR, '..', 'output', 'session-dashboard', 'index.html');
 
+// ── Timeline API 의존성 (lazy load) ──────────────────────────────────
+let _timelineDeps = null;
+function getTimelineDeps() {
+  if (_timelineDeps) return _timelineDeps;
+  const wrapLib = path.join(PLUGIN_DIR, '..', 'my-session-wrap', 'lib', 'session');
+  const { loadSessionBundle } = require(path.join(wrapLib, 'session-loader.js'));
+  const { normalizeSessionBundle } = require(path.join(wrapLib, 'session-normalizer.js'));
+  const { buildTimeline } = require(path.join(wrapLib, 'timeline-builder.js'));
+  _timelineDeps = { loadSessionBundle, normalizeSessionBundle, buildTimeline };
+  return _timelineDeps;
+}
+
 // ── SSE 클라이언트 관리 ──────────────────────────────────────────────
 let sseClients = [];
 let buildDone = false;
+
+// ── Idle timeout (API 제공을 위해 빌드 후에도 유지, 5분 무요청 시 종료) ──
+const IDLE_TIMEOUT_MS = 5 * 60 * 1000;
+let idleTimer = null;
+function resetIdleTimer() {
+  if (idleTimer) clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => {
+    console.log('[serve] Idle timeout — 서버 종료.');
+    server.close();
+    process.exit(0);
+  }, IDLE_TIMEOUT_MS);
+}
 
 function sendSSE(event, data) {
   const msg = event === 'message'
@@ -124,6 +149,29 @@ function handleRequest(req, res) {
     return;
   }
 
+  // Timeline API
+  const timelineMatch = req.url.match(/^\/api\/timeline\/([a-f0-9-]{36})$/);
+  if (timelineMatch) {
+    const sessionId = timelineMatch[1];
+    resetIdleTimer();
+    try {
+      const { loadSessionBundle, normalizeSessionBundle, buildTimeline } = getTimelineDeps();
+      const bundle = loadSessionBundle(sessionId);
+      const normalized = normalizeSessionBundle(bundle);
+      const timeline = buildTimeline(normalized);
+      const json = JSON.stringify(timeline);
+      res.writeHead(200, {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Access-Control-Allow-Origin': '*',
+      });
+      res.end(json);
+    } catch (err) {
+      res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end(JSON.stringify({ error: err.message }));
+    }
+    return;
+  }
+
   // 메인 페이지
   if (req.url === '/' || req.url === '/index.html') {
     if (fs.existsSync(OUTPUT_HTML)) {
@@ -202,12 +250,8 @@ function runBuild(server) {
         buildDone = true;
         sendSSE('reload', '');
 
-        // 브라우저 리로드 후 5초 뒤 서버 종료
-        setTimeout(() => {
-          console.log('[serve] 서버 종료.');
-          server.close();
-          process.exit(0);
-        }, 5000);
+        // 빌드 완료 후 idle timer 시작 (API 요청 대비 서버 유지)
+        resetIdleTimer();
       }, 400);
     } else {
       console.error('[serve] 빌드 실패, 종료코드:', code);

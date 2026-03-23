@@ -12,7 +12,7 @@
       "name": "my-session-dashboard",
       "description": "Claude Code 대화 세션을 시각적으로 탐색하는 대시보드",
       "source": "./my-session-dashboard",
-      "version": "1.4.3"
+      "version": "1.5.0"
     }
   ]
 }
