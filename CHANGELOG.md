@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-23 | docs | - | `_docs` session-timeline 스킬 복구 + 소요 열 추가 작업 문서 |
 | 2026-03-23 | feat | - | `my-session-wrap` session-timeline 스킬 복구 + 소요 열 추가 — 삭제된 스킬 파일 git 복구, renderTimelineMarkdown()에 소요 열 추가, CLI 테스트 복구 |
 | 2026-03-23 | fix | - | `my-session-wrap` continue 스킬 handoff 검색 경로 개선 — git 레포 루트 우선 탐색 후 CWD 폴백 |
 | 2026-03-23 | docs | - | `my-session-dashboard` 온디맨드 타임라인 구현 작업 문서 추가 |
