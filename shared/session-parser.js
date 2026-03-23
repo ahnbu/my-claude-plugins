@@ -236,6 +236,7 @@ function processSession(filePath) {
   let userTextMessageCount = 0;
   let toolResultCount = 0;
   let toolUseCount = 0;
+  let errorCount = 0;
   const models = new Set();
   const toolNames = {};
   const toolUseIdMap = {};
@@ -258,6 +259,7 @@ function processSession(filePath) {
       const content = entry.message?.content;
       if (Array.isArray(content)) {
         toolResultCount += content.filter(b => b.type === "tool_result").length;
+        errorCount += content.filter(b => b.type === "tool_result" && b.is_error).length;
       }
 
       // 실제 사용자 텍스트 판정: isMeta 제외 (스킬 확장 프롬프트는 시스템 자동 주입)
@@ -362,6 +364,7 @@ function processSession(filePath) {
     userTextMessageCount,
     toolResultCount,
     toolUseCount,
+    errorCount,
     totalInputTokens,
     totalOutputTokens,
     toolNames,
@@ -507,6 +510,7 @@ function processCodexSession(filePath) {
     userTextMessageCount: userEntryCount,
     toolResultCount,
     toolUseCount,
+    errorCount: 0,
     totalInputTokens,
     totalOutputTokens,
     toolNames,
@@ -918,6 +922,7 @@ function processGeminiSession(filePath, projectRoot) {
     userTextMessageCount: userMessages.length,
     toolResultCount: toolUseCount,
     toolUseCount,
+    errorCount: 0,
     totalInputTokens,
     totalOutputTokens,
     toolNames,
@@ -1077,6 +1082,7 @@ function processAntigravitySession(conversation, exportFilePath) {
     userTextMessageCount: userMessages.length,
     toolResultCount: toolUseCount,
     toolUseCount,
+    errorCount: 0,
     totalInputTokens: 0,
     totalOutputTokens: 0,
     toolNames,

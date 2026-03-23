@@ -82,6 +82,7 @@ class SessionDB {
         user_text_message_count     INTEGER DEFAULT 0,
         tool_result_count           INTEGER DEFAULT 0,
         tool_use_count    INTEGER DEFAULT 0,
+        error_count       INTEGER DEFAULT 0,
         total_input_tokens  INTEGER DEFAULT 0,
         total_output_tokens INTEGER DEFAULT 0,
         tool_names        TEXT,
@@ -150,6 +151,11 @@ class SessionDB {
       // 신규 DB(CREATE TABLE에 이미 user_entry_count 있음): 신규 2개만 추가
       this.db.exec("ALTER TABLE sessions ADD COLUMN user_text_message_count INTEGER DEFAULT 0");
       this.db.exec("ALTER TABLE sessions ADD COLUMN tool_result_count INTEGER DEFAULT 0");
+    }
+    // 마이그레이션: error_count 컬럼 추가
+    if (!cols.includes("error_count")) {
+      this.db.exec("ALTER TABLE sessions ADD COLUMN error_count INTEGER DEFAULT 0");
+      this.db.exec("UPDATE sessions SET mtime = 0"); // 강제 재동기화
     }
   }
 
@@ -538,10 +544,10 @@ class SessionDB {
       INSERT OR REPLACE INTO sessions
         (session_id, type, title, keywords, timestamp, last_timestamp, project, git_branch,
          models, user_entry_count, user_text_message_count, tool_result_count,
-         tool_use_count, total_input_tokens, total_output_tokens,
+         tool_use_count, error_count, total_input_tokens, total_output_tokens,
          tool_names, first_message, file_path, mtime,
          slug, is_completed, char_count, linked_session_id, plan_slug, originator)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       metadata.sessionId,
       metadata.type || "session",
@@ -556,6 +562,7 @@ class SessionDB {
       metadata.userTextMessageCount || 0,
       metadata.toolResultCount || 0,
       metadata.toolUseCount || 0,
+      metadata.errorCount || 0,
       metadata.totalInputTokens || 0,
       metadata.totalOutputTokens || 0,
       JSON.stringify(metadata.toolNames || {}),
@@ -621,6 +628,7 @@ class SessionDB {
       userTextMessageCount: row.user_text_message_count || 0,
       toolResultCount: row.tool_result_count || 0,
       toolUseCount: row.tool_use_count || 0,
+      errorCount: row.error_count || 0,
       totalInputTokens: row.total_input_tokens || 0,
       totalOutputTokens: row.total_output_tokens || 0,
       toolNames: JSON.parse(row.tool_names || "{}"),
