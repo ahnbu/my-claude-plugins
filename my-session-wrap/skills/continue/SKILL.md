@@ -26,7 +26,11 @@ description: "최신 handoff를 읽고 이전 세션 컨텍스트를 재수립. 
 6. 승인 시 마지막 작업 지점부터 작업 개시
 
 ### 경로 B: handoff 기반 복원 (기존)
-1. `_handoff/handoff_*.md` Glob으로 검색 → 파일명 기준 최신순 정렬
+1. handoff 검색 (다단계 탐색):
+   a. `git rev-parse --show-toplevel`로 레포 루트 확인 → `<레포루트>/_handoff/handoff_*.md` Glob 검색
+   b. 미발견 또는 git 레포 아닌 경우 → CWD에서 `_handoff/handoff_*.md` Glob 검색
+   c. 미발견 시 → "handoff 파일을 찾을 수 없습니다" 안내 후 종료
+   → 파일명 기준 최신순 정렬
 2. 당일 파일이 2개 이상이면 AskUserQuestion으로 선택, 아니면 최신 1개 자동 선택
 3. 선택된 handoff를 Read로 읽기
 4. 요약 출력:

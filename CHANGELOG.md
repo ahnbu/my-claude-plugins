@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-23 | fix | - | `my-session-wrap` continue 스킬 handoff 검색 경로 개선 — git 레포 루트 우선 탐색 후 CWD 폴백 |
 | 2026-03-23 | docs | - | `my-session-dashboard` 온디맨드 타임라인 구현 작업 문서 추가 |
 | 2026-03-23 | refactor | - | `my-session-dashboard` 타임라인 소요 열 추가 + 왼쪽 패널 도구배지·키워드태그 제거 |
 | 2026-03-23 | feat | - | `my-session-wrap` history-insight 리포트 자동 저장 — SKILL.md에 저장 경로 지시 추가, history-insights-report/ 폴더 생성, 2달간 활동 분석 상세 리포트 |
