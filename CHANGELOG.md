@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-23 | docs | - | 커맨드 스킬 래퍼 패턴 전환 — 4~5단계 테스트 및 의사결정 기록 추가 (session-timeline/session-transcript 동작 검증, doc-save-cp 커맨드 발견, 디스커버리 메커니즘 정리) |
 | 2026-03-23 | docs | - | 커맨드 스킬 래퍼 패턴 전환 의사결정 기록 |
 | 2026-03-23 | refactor | - | `my-session-wrap` 커맨드를 스킬 래퍼 패턴으로 전환 — wrap/continue/cp 커맨드를 SKILL.md 참조 래퍼로 교체, history-insight 커맨드 신규 생성, save 커맨드 폐기(temp 이동), allowed-tools 제거 |
 | 2026-03-21 | feat | - | 대시보드 실행 시 터미널 창 숨김 — session.vbs 래퍼 추가, serve.js 브라우저 열기를 PowerShell Start-Process로 변경, 바로가기(.lnk) wscript.exe 연결 |
