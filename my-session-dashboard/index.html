@@ -1270,14 +1270,7 @@
           ? `<span>${s.charCount || 0}자</span>`
           : `<span>${s.userTextMessageCount || 0} 메시지</span>`;
 
-        const toolCount = s.toolUseCount || 0;
-        const errCount = s.errorCount || 0;
-        const metricsHtml = !isPlan && toolCount > 0
-          ? `<span class="session-metrics">`
-            + `<span title="도구 호출 수">🔧 ${toolCount}</span>`
-            + (errCount > 0 ? `<span class="error-badge" title="에러 수">❌ ${errCount}</span>` : '')
-            + `</span>`
-          : '';
+        const metricsHtml = '';
 
         return `
           <div class="${itemClass}"
@@ -1288,7 +1281,6 @@
               <span>${dateStr} ${timeStr}</span>
               ${metaInfo}
               ${metricsHtml}
-              ${(s.keywords || []).map((k) => `<span class="keyword-tag">${escapeHtml(k)}</span>`).join("")}
             </div>
           </div>
         `;
@@ -1994,21 +1986,35 @@
       </div>
     `;
 
+    // startClock("MM:SS" or "HH:MM:SS") → 초 변환
+    const clockToSec = (c) => {
+      if (!c) return 0;
+      const p = c.split(":").map(Number);
+      return p.length === 3 ? p[0] * 3600 + p[1] * 60 + p[2] : (p[0] || 0) * 60 + (p[1] || 0);
+    };
+
     // 도구 호출 테이블
     if (tl.toolCalls.length > 0) {
       html += `<table class="timeline-table"><thead><tr>
-        <th>#</th><th>시각</th><th>도구</th><th>입력</th><th>대기</th><th>상태</th><th>결과</th>
+        <th>#</th><th>시각</th><th>도구</th><th>입력</th><th>소요</th><th>대기</th><th>상태</th><th>결과</th>
       </tr></thead><tbody>`;
       for (let i = 0; i < tl.toolCalls.length; i++) {
         const tc = tl.toolCalls[i];
         const statusClass = tc.status === "ok" ? "status-ok" : tc.status === "error" ? "status-error" : "status-pending";
         const inputCtx = getTimelineToolContext(tc);
         const preview = (tc.resultPreview || "").substring(0, 60);
+        // 소요시간: 현재 도구 시작 → 다음 도구 시작 (마지막은 세션 종료까지)
+        const curSec = clockToSec(tc.startClock);
+        const nextSec = i < tl.toolCalls.length - 1
+          ? clockToSec(tl.toolCalls[i + 1].startClock)
+          : Math.floor(s.sessionElapsedMs / 1000);
+        const stepMs = (nextSec - curSec) * 1000;
         html += `<tr>
           <td>${i + 1}</td>
           <td>${escapeHtml(tc.startClock)}</td>
           <td>${escapeHtml(shortenToolName(tc.toolName))}</td>
           <td class="wrap" title="${escapeAttr(JSON.stringify(tc.input || {}))}">${escapeHtml(inputCtx)}</td>
+          <td>${stepMs > 0 ? fmtMs(stepMs) : "-"}</td>
           <td>${tc.waitMs != null ? fmtMs(tc.waitMs) : "-"}</td>
           <td class="${statusClass}">${tc.status}</td>
           <td class="wrap" title="${escapeAttr(preview)}">${escapeHtml(preview)}</td>

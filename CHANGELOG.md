@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-23 | refactor | - | `my-session-dashboard` 타임라인 소요 열 추가 + 왼쪽 패널 도구배지·키워드태그 제거 |
 | 2026-03-23 | feat | - | `my-session-wrap` history-insight 리포트 자동 저장 — SKILL.md에 저장 경로 지시 추가, history-insights-report/ 폴더 생성, 2달간 활동 분석 상세 리포트 |
 | 2026-03-23 | docs | - | `_docs` 세션DB 검토 문서 + cp 스킬 레포감지 개선 문서 추가, cp 스킬 Step 1 로직 반영 |
 | 2026-03-23 | refactor | - | `my-session-wrap` cp 스킬 Step 1 레포 감지 개선 — CWD 3종 스캔 → 변경 파일 기준 레포 감지로 전환, 유령 파일(~/.claude/skills/cp/) 삭제, Gemini/Codex junction 플러그인 원본으로 재설정 |
