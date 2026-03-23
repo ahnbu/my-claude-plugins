@@ -424,6 +424,17 @@
     color: var(--text-dim);
   }
 
+  .session-metrics {
+    display: flex;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+  .session-metrics .error-badge {
+    color: var(--warning, #e67e22);
+  }
+
   .keyword-tag {
     display: inline-block;
     padding: 1px 6px;
@@ -837,6 +848,25 @@
     opacity: 1;
     transform: translateX(-50%) translateY(0);
   }
+
+  .tool-filter-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 16px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .tool-filter-row label { color: var(--text-muted); }
+  .tool-filter-row select {
+    background: var(--bg-primary, var(--bg));
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 12px;
+  }
 </style>
 </head>
 <body>
@@ -895,6 +925,7 @@
   let activeTypeFilter = "all";
   let searchQuery = "";
   let showCodexExec = localStorage.getItem("ss:showCodexExec") === "true";
+  let toolResultFilter = localStorage.getItem("ss:toolResultFilter") || "all";
 
   if (localStorage.getItem("sidebarCollapsed") === "1") {
     document.querySelector(".app").classList.add("sidebar-collapsed");
@@ -902,6 +933,33 @@
   let showAntigravity = localStorage.getItem("ss:showAntigravity") === "true";
 
   const ROLE_LABELS = { user: "사용자", assistant: "어시스턴트" };
+
+  function shortenToolName(name) {
+    if (!name || !name.startsWith("mcp__")) return name;
+    const rest = name.slice(5);
+    const idx = rest.indexOf("__");
+    if (idx === -1) return rest;
+    const server = rest.slice(0, idx);
+    const action = rest.slice(idx + 2);
+    if (server.startsWith("plugin_")) return action;
+    if (server === action) return server;
+    return server + ":" + action;
+  }
+
+  window.setToolResultFilter = function(value) {
+    toolResultFilter = value;
+    localStorage.setItem("ss:toolResultFilter", value);
+    const msgs = document.querySelectorAll(".tool-result-msg");
+    msgs.forEach(el => {
+      if (value === "hide") {
+        el.style.display = "none";
+      } else if (value === "errors") {
+        el.style.display = el.dataset.isError === "true" ? "" : "none";
+      } else {
+        el.style.display = "";
+      }
+    });
+  };
 
   // ── Data Loading (inline) ──
   function loadSessions() {
@@ -1158,6 +1216,15 @@
           ? `<span>${s.charCount || 0}자</span>`
           : `<span>${s.userTextMessageCount || 0} 메시지</span>`;
 
+        const toolCount = s.toolUseCount || 0;
+        const errCount = s.errorCount || 0;
+        const metricsHtml = !isPlan && toolCount > 0
+          ? `<span class="session-metrics">`
+            + `<span title="도구 호출 수">🔧 ${toolCount}</span>`
+            + (errCount > 0 ? `<span class="error-badge" title="에러 수">❌ ${errCount}</span>` : '')
+            + `</span>`
+          : '';
+
         return `
           <div class="${itemClass}"
                data-id="${s.sessionId}" onclick="selectSession('${escapeAttr(s.sessionId)}')">
@@ -1166,6 +1233,7 @@
             <div class="session-meta">
               <span>${dateStr} ${timeStr}</span>
               ${metaInfo}
+              ${metricsHtml}
               ${(s.keywords || []).map((k) => `<span class="keyword-tag">${escapeHtml(k)}</span>`).join("")}
             </div>
           </div>
@@ -1219,6 +1287,14 @@
           <span class="file-path-value" title="${escapeAttr(sessionFilePath)}">${escapeHtml(sessionFilePath)}</span><button class="copy-btn" data-path="${escapeAttr(sessionFilePath)}" onclick="copyPath(this)">복사</button>
         </div>` : ""}
       </div>
+      <div class="tool-filter-row">
+        <label>도구 응답:</label>
+        <select onchange="setToolResultFilter(this.value)">
+          <option value="all"${toolResultFilter === "all" ? " selected" : ""}>전체</option>
+          <option value="hide"${toolResultFilter === "hide" ? " selected" : ""}>숨김</option>
+          <option value="errors"${toolResultFilter === "errors" ? " selected" : ""}>에러만</option>
+        </select>
+      </div>
       <div class="messages">
     `;
 
@@ -1257,7 +1333,7 @@
                 const key = HINT_KEY[t.name];
                 const val = t.input && (key ? t.input[key] : Object.values(t.input)[0]);
                 const hint = (val && typeof val === "string") ? " › " + val.substring(0, 35) : "";
-                return t.name + hint;
+                return shortenToolName(t.name) + hint;
               });
               return "도구 응답 · " + parts.join(", ");
             })()
@@ -1288,9 +1364,14 @@
         }
       }
 
-      const extraClass = (msg.role === "user" && msg.subtype === "tool_result") ? " tool-result-msg" : "";
+      const isToolResult = msg.role === "user" && msg.subtype === "tool_result";
+      const extraClass = isToolResult ? " tool-result-msg" : "";
+      const isError = isToolResult && msg.text && /error/i.test(msg.text);
+      const toolResultHidden = isToolResult && (
+        toolResultFilter === "hide" || (toolResultFilter === "errors" && !isError)
+      );
       html += `
-        <div class="message ${msg.role}${extraClass}" id="${msgId}">
+        <div class="message ${msg.role}${extraClass}" id="${msgId}"${isToolResult ? ` data-is-error="${isError}"` : ""}${toolResultHidden ? ' style="display:none"' : ""}>
           <div class="message-header">
             <span class="role-badge ${roleBadgeClass}">${roleLabel}</span>
             <span class="message-time">${time}</span>
@@ -1309,7 +1390,7 @@
             <div class="tool-block">
               <div class="tool-header" onclick="toggleTool(this)">
                 <span class="tool-arrow">&#9654;</span>
-                <span class="tool-name">${escapeHtml(tool.name)}</span>
+                <span class="tool-name">${escapeHtml(shortenToolName(tool.name))}</span>
                 <span>${toolSummary(tool)}</span>
               </div>
               <div class="tool-body">${escapeHtml(inputStr)}</div>
@@ -1632,6 +1713,13 @@
     }
     if (tool.name === "apply_patch") return "파일 패치 적용";
     if (tool.name === "web_search" && input.query) return escapeHtml(String(input.query));
+    // MCP/기타 도구 폴백
+    if (input.file_path) return escapeHtml(String(input.file_path));
+    if (input.command) return escapeHtml(String(input.command).substring(0, 60));
+    if (input.pattern) return escapeHtml(String(input.pattern));
+    if (input.url) return escapeHtml(String(input.url));
+    if (input.path) return escapeHtml(String(input.path));
+    if (input.description) return escapeHtml(String(input.description).substring(0, 60));
     return "";
   }
 
@@ -1685,7 +1773,7 @@
         if (m.text) parts.push(m.text);
         if (m.tools && m.tools.length > 0) {
           for (const tool of m.tools) {
-            let toolLine = `> 🔧 **${tool.name}** ${toolSummary(tool)}`;
+            let toolLine = `> 🔧 **${shortenToolName(tool.name)}** ${toolSummary(tool)}`;
             if (detailed && tool.input) {
               const json = JSON.stringify(tool.input, null, 2).split("\n").join("\n> ");
               toolLine += `\n> \`\`\`json\n> ${json}\n> \`\`\``;
