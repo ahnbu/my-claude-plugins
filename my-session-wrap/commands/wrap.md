@@ -1,12 +1,7 @@
 ---
 description: 세션 마무리 — handoff 파일 저장, git commit (git 환경 시)
-allowed-tools: Bash(git *), Read, Write, Edit, Glob, Grep, AskUserQuestion
-plugin: wrap
+plugin: my-session-wrap
 ---
-
-# Session Wrap-up (/wrap)
-
-Wrap up the current session by saving a handoff document and optionally creating a git commit.
 
 ## Quick Usage
 
@@ -15,10 +10,5 @@ Wrap up the current session by saving a handoff document and optionally creating
 
 ## Execution
 
-Follow the workflow defined in the **wrap** skill:
-
-1. Check git status
-2. Generate handoff file (session context → template-based document)
-3. Optionally create git commit
-
-Refer to `skills/wrap/SKILL.md` for detailed execution steps.
+Read and follow the skill definition at:
+C:\Users\ahnbu\.claude\my-claude-plugins\my-session-wrap\skills\my-session-wrap\SKILL.md

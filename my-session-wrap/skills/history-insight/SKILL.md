@@ -107,6 +107,10 @@ scripts/extract-session.sh <session.jsonl>
 
 ### Step 4: Report Results
 
+분석 결과를 출력하고, `${SKILL_DIR}/history-insights-report/` 폴더에 자동 저장한다.
+
+**파일명**: `{요약}_YYYYMMDD.md` (한국어 2~4단어 요약)
+
 ```markdown
 ## Session Capture Complete
 
@@ -116,6 +120,8 @@ scripts/extract-session.sh <session.jsonl>
 ### Extracted Insights
 [분석 결과]
 ```
+
+저장 후 경로를 사용자에게 출력한다.
 
 ---
 
