@@ -635,6 +635,7 @@ class SessionDB {
       totalInputTokens: row.total_input_tokens || 0,
       totalOutputTokens: row.total_output_tokens || 0,
       toolNames: JSON.parse(row.tool_names || "{}"),
+      slashCommands: JSON.parse(row.slash_commands || "[]"),
       firstMessage: row.first_message || "",
       filePath: row.file_path || "",
     };

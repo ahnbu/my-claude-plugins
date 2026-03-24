@@ -283,7 +283,7 @@ function processSession(filePath) {
         : isToolResult ? "tool_result"
         : "user_input";
 
-      const msgObj = { role: "user", subtype, text: cleanText, timestamp: entry.timestamp };
+      const msgObj = { role: "user", subtype, text: cleanText || (cmds.length > 0 ? cmds.join(" ") : ""), timestamp: entry.timestamp };
       if (isToolResult) {
         const trTools = content
           .filter(b => b.type === "tool_result" && b.tool_use_id)

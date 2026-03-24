@@ -12,6 +12,7 @@
 |------|------|------|-----------|
 | 2026-03-24 | fix | - | `shared` session-db: getSession 응답에 slashCommands 필드 추가 — slash_commands 컬럼 파싱 포함 |
 | 2026-03-24 | fix | - | `my-session-wrap` SKILL.md .sh → .mjs 통일 — history-insight/session-analyzer/my-session-wrap 스킬 스크립트 명령어 전환 |
+| 2026-03-24 | fix | - | `shared` session-parser: 슬래시 커맨드 메시지 대화 뷰 표시 수정 — cleanText 빈 문자열 시 cmds 폴백으로 "/wrap" 등 텍스트 복원 |
 | 2026-03-24 | feat | - | `my-session-dashboard` index.html: 슬래시 커맨드 UI 표시 — 세션 카드 태그, 상세 뷰 "사용 커맨드" 행, 검색 필드 추가 |
 | 2026-03-24 | feat | - | `shared` session-parser/session-db/text-utils: 슬래시 커맨드 사용 이력 추적 — `extractSlashCommands()` 추가, sessions 테이블에 `slash_commands` 컬럼 신설 |
 | 2026-03-24 | fix | - | `my-session-dashboard` 타임라인 sticky header 투명 틈 제거 — body padding-top 0으로 변경, summary margin으로 보상 |

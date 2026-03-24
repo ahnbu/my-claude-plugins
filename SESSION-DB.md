@@ -346,6 +346,7 @@ node shared/query-sessions.js by-project "my-claude-plugins"
 
 | 날짜 | 카테고리 | 변경 내용 | 관련 커밋 |
 |------|---------|---------|----------|
+| 2026-03-24 | 파일 맵 | `session-parser.js` — 슬래시 커맨드 전용 메시지 텍스트 복원: `cleanText` 빈 문자열 시 `cmds` 폴백으로 대화 뷰에 `/wrap` 등 표시 | — |
 | 2026-03-24 | 스키마 | sessions 테이블에 `slash_commands TEXT` 컬럼 추가 — `<command-name>` 태그에서 슬래시 커맨드 목록 추출하여 JSON 배열로 저장. `extractSlashCommands()` text-utils.js에 추가, session-parser.js processSession()에 집계 로직 반영 | — |
 | 2026-03-23 | 스키마 | sessions 테이블에 `error_count` 컬럼 추가 (is_error=true인 tool_result 카운트). 기존 DB 마이그레이션 포함 (ALTER TABLE + mtime=0 강제 재동기화) | — |
 | 2026-03-20 | 설명 | §1 개요에 데이터 계층 비교표 2개 추가 (JSONL→DB 계층별 용도·크기, messages vs events 세부 구성) | — |
