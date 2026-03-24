@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-24 | fix | - | `my-session-wrap` session-timeline: 소요 열을 턴 내 스텝 시간으로 변경, idle 행 삽입(5분 임계값), "세션 소요"→"작업 소요"(idle 제외), "입력"→"대상" 열 이름 변경 |
 | 2026-03-24 | fix | - | `my-session-wrap` next-handoff.sh → .mjs 통일 — MSYS bash git의 외부 gitdir 경로 오해석 버그 수정, .sh/.ps1 삭제, SKILL.md `bash`→`node` 치환 |
 | 2026-03-24 | docs | - | `commands` 신규 스킬의 슬래시 커맨드 등록 규칙 문서화 — `CLAUDE.md`에 스킬래퍼 형식과 `~/.claude/commands/<skill-name>.md` 등록 기준 추가 |
 | 2026-03-24 | chore | - | `my-session-wrap,my-session-dashboard` ensure-commands.js 원본 삭제 완료 — .bak 전환 커밋 마무리 |
