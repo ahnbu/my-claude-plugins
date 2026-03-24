@@ -130,7 +130,7 @@ node scripts/extract-session.mjs <session.jsonl>
 | Scenario | Response |
 |----------|----------|
 | No session files found | "No session files found for this project." |
-| File too large | Auto-preprocess with extract-session.sh |
+| File too large | Auto-preprocess with extract-session.mjs |
 | jq not installed | "Error: jq is required. Install with: brew install jq" |
 | Task failed | "Warning: Could not process [file]. Skipping." |
 | 0 relevant sessions | "No sessions matched your criteria." |
@@ -145,5 +145,5 @@ node scripts/extract-session.mjs <session.jsonl>
 
 ## Related Resources
 
-- **`scripts/extract-session.sh`** - JSONL 압축 (thinking, tool_use 제거)
+- **`scripts/extract-session.mjs`** - JSONL 압축 (thinking, tool_use 제거)
 - **`references/session-file-format.md`** - JSONL 구조 및 파싱

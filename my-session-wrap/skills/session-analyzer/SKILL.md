@@ -265,9 +265,9 @@ Flag any mismatches:
 
 | Script | Purpose |
 |--------|---------|
-| `find-session-files.sh` | Locate all files for a session ID |
-| `extract-subagent-calls.sh` | Parse subagent invocations from debug log |
-| `extract-hook-events.sh` | Parse hook events from debug log |
+| `find-session-files.mjs` | Locate all files for a session ID |
+| `extract-subagent-calls.mjs` | Parse subagent invocations from debug log |
+| `extract-hook-events.mjs` | Parse hook events from debug log |
 
 ---
 
@@ -293,6 +293,6 @@ User: "Analyze session 3cc71c9f-d27a-4233-9dbc-c4f07ea6ec5b against .claude/skil
 - **`references/common-issues.md`** - Known issues and troubleshooting
 
 ### Scripts
-- **`scripts/find-session-files.sh`** - Session file locator
-- **`scripts/extract-subagent-calls.sh`** - SubAgent call extractor
-- **`scripts/extract-hook-events.sh`** - Hook event extractor
+- **`scripts/find-session-files.mjs`** - Session file locator
+- **`scripts/extract-subagent-calls.mjs`** - SubAgent call extractor
+- **`scripts/extract-hook-events.mjs`** - Hook event extractor
