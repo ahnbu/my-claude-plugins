@@ -424,6 +424,14 @@
     color: var(--text-dim);
   }
 
+  .slash-tag {
+    font-size: 10px;
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    border-radius: 3px;
+    padding: 1px 4px;
+  }
+
   .session-metrics {
     display: flex;
     gap: 8px;
@@ -1201,6 +1209,8 @@
         ];
         // toolNames 키 추가 (도구명으로 검색 가능)
         if (s.toolNames) fields.push(...Object.keys(s.toolNames));
+        // slashCommands 추가 (슬래시 커맨드로 검색 가능)
+        if (s.slashCommands && s.slashCommands.length > 0) fields.push(...s.slashCommands);
         // 세션/plan 모두 대화 내용 검색 대상에 포함
         const conv = loadConversation(s.sessionId);
         if (typeof conv === "string") {
@@ -1270,7 +1280,9 @@
           ? `<span>${s.charCount || 0}자</span>`
           : `<span>${s.userTextMessageCount || 0} 메시지</span>`;
 
-        const metricsHtml = '';
+        const slashTagsHtml = (s.slashCommands && s.slashCommands.length > 0)
+          ? s.slashCommands.map(c => `<span class="slash-tag">${escapeHtml(c)}</span>`).join("")
+          : "";
 
         return `
           <div class="${itemClass}"
@@ -1280,7 +1292,7 @@
             <div class="session-meta">
               <span>${dateStr} ${timeStr}</span>
               ${metaInfo}
-              ${metricsHtml}
+              ${slashTagsHtml}
             </div>
           </div>
         `;
@@ -1323,6 +1335,7 @@
           <span><span class="label">소요시간:</span> ${duration}</span>
           <span><span class="label">토큰:</span> ${tokenStr}</span>
           <span><span class="label">모델:</span> ${escapeHtml((meta.models || []).join(", "))}</span>
+          ${(meta.slashCommands && meta.slashCommands.length > 0) ? `<span><span class="label">사용 커맨드:</span> ${meta.slashCommands.map(c => escapeHtml(c)).join(", ")}</span>` : ""}
         </div>
         ${meta.sessionId ? `<div class="file-path-row">
           <span class="file-path-label">세션ID:</span>
