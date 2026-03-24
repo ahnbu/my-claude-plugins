@@ -1978,7 +1978,7 @@
 
     let html = `
       <div class="timeline-summary">
-        <div class="timeline-stat"><div class="stat-value">${fmtMs(s.sessionElapsedMs)}</div><div class="stat-label">세션 소요</div></div>
+        <div class="timeline-stat"><div class="stat-value">${fmtMs(s.activeElapsedMs ?? s.sessionElapsedMs)}</div><div class="stat-label">작업 소요</div></div>
         <div class="timeline-stat"><div class="stat-value">${fmtMs(s.totalTurnDurationMs)}</div><div class="stat-label">AI 턴 소요</div></div>
         <div class="timeline-stat"><div class="stat-value">${fmtMs(s.totalToolWaitMs)}</div><div class="stat-label">도구 대기</div></div>
         <div class="timeline-stat"><div class="stat-value">${tl.toolCalls.length}</div><div class="stat-label">도구 호출</div></div>
@@ -1996,21 +1996,42 @@
     // 도구 호출 테이블
     if (tl.toolCalls.length > 0) {
       html += `<table class="timeline-table"><thead><tr>
-        <th>#</th><th>시각</th><th>도구</th><th>입력</th><th>소요</th><th>대기</th><th>상태</th><th>결과</th>
+        <th>#</th><th>시각</th><th>도구</th><th>대상</th><th>소요</th><th>대기</th><th>상태</th><th>결과</th>
       </tr></thead><tbody>`;
+      const IDLE_THRESHOLD_MS = 5 * 60 * 1000;
+      let rowNum = 1;
       for (let i = 0; i < tl.toolCalls.length; i++) {
         const tc = tl.toolCalls[i];
+        // idle 행 삽입: 턴이 바뀌고 gap > 5분
+        if (i > 0 && tl.toolCalls[i - 1].turnEndMs !== tc.turnEndMs) {
+          const prevTurnEnd = tl.toolCalls[i - 1].turnEndMs;
+          if (prevTurnEnd != null && tc.timestampMs != null) {
+            const idleMs = tc.timestampMs - prevTurnEnd;
+            if (idleMs > IDLE_THRESHOLD_MS) {
+              html += `<tr style="opacity:0.5;font-style:italic">
+                <td></td><td></td><td>⏸ idle</td><td></td><td>${fmtMs(idleMs)}</td><td></td><td></td><td></td>
+              </tr>`;
+            }
+          }
+        }
         const statusClass = tc.status === "ok" ? "status-ok" : tc.status === "error" ? "status-error" : "status-pending";
         const inputCtx = getTimelineToolContext(tc);
         const preview = (tc.resultPreview || "").substring(0, 60);
-        // 소요시간: 현재 도구 시작 → 다음 도구 시작 (마지막은 세션 종료까지)
-        const curSec = clockToSec(tc.startClock);
-        const nextSec = i < tl.toolCalls.length - 1
-          ? clockToSec(tl.toolCalls[i + 1].startClock)
-          : Math.floor(s.sessionElapsedMs / 1000);
-        const stepMs = (nextSec - curSec) * 1000;
+        // 소요: 같은 턴이면 다음 도구까지, 턴 마지막이면 turnEndMs까지
+        const isLastInTurn = i === tl.toolCalls.length - 1 || tc.turnEndMs !== tl.toolCalls[i + 1].turnEndMs;
+        let stepMs;
+        if (isLastInTurn && tc.turnEndMs != null && tc.timestampMs != null) {
+          stepMs = tc.turnEndMs - tc.timestampMs;
+        } else if (!isLastInTurn) {
+          const curSec = clockToSec(tc.startClock);
+          const nextSec = clockToSec(tl.toolCalls[i + 1].startClock);
+          stepMs = (nextSec - curSec) * 1000;
+        } else {
+          const curSec = clockToSec(tc.startClock);
+          stepMs = (Math.floor(s.sessionElapsedMs / 1000) - curSec) * 1000;
+        }
         html += `<tr>
-          <td>${i + 1}</td>
+          <td>${rowNum++}</td>
           <td>${escapeHtml(tc.startClock)}</td>
           <td>${escapeHtml(shortenToolName(tc.toolName))}</td>
           <td class="wrap" title="${escapeAttr(JSON.stringify(tc.input || {}))}">${escapeHtml(inputCtx)}</td>
