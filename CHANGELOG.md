@@ -12,6 +12,7 @@
 |------|------|------|-----------|
 | 2026-03-24 | feat | - | `my-session-dashboard` index.html: 슬래시 커맨드 UI 표시 — 세션 카드 태그, 상세 뷰 "사용 커맨드" 행, 검색 필드 추가 |
 | 2026-03-24 | feat | - | `shared` session-parser/session-db/text-utils: 슬래시 커맨드 사용 이력 추적 — `extractSlashCommands()` 추가, sessions 테이블에 `slash_commands` 컬럼 신설 |
+| 2026-03-24 | fix | - | `my-session-dashboard` 타임라인 sticky header 투명 틈 제거 — body padding-top 0으로 변경, summary margin으로 보상 |
 | 2026-03-24 | fix | - | `my-session-dashboard` 타임라인 모달: 소요 계산 개선, idle 행 삽입, "세션 소요"→"작업 소요", "입력"→"대상" (timeline-builder.js와 동기화) |
 | 2026-03-24 | fix | - | `my-session-wrap` session-timeline: 소요 열을 턴 내 스텝 시간으로 변경, idle 행 삽입(5분 임계값), "세션 소요"→"작업 소요"(idle 제외), "입력"→"대상" 열 이름 변경 |
 | 2026-03-24 | fix | - | `my-session-wrap` next-handoff.sh → .mjs 통일 — MSYS bash git의 외부 gitdir 경로 오해석 버그 수정, .sh/.ps1 삭제, SKILL.md `bash`→`node` 치환 |
