@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-24 | docs | - | `commands` 신규 스킬의 슬래시 커맨드 등록 규칙 문서화 — `CLAUDE.md`에 스킬래퍼 형식과 `~/.claude/commands/<skill-name>.md` 등록 기준 추가 |
 | 2026-03-24 | chore | - | `my-session-wrap,my-session-dashboard` ensure-commands.js 원본 삭제 완료 — .bak 전환 커밋 마무리 |
 | 2026-03-24 | chore | - | `my-session-dashboard` hooks/ 미사용 파일 정리 — ensure-commands.js → .bak 전환, hooks.json SessionStart 빈 배열로 정리 |
 | 2026-03-24 | chore | - | `my-session-wrap` hooks/ 미사용 파일 정리 — ensure-commands.js → .bak 전환, hooks.json SessionStart 죽은 참조 3개 제거 |

@@ -34,6 +34,21 @@ SessionStart 훅으로 매 세션 실행. 플러그인의 `commands/` 파일을 
 - 같은 플러그인 마커 → 내용 비교 후 변경 시 자동 갱신
 - 파일 없음 → 자동 설치
 
+### 스킬 → 슬래시 커맨드 등록 규칙
+
+신규 스킬 생성 시 반드시 `~/.claude/commands/<skill-name>.md`에 스킬래퍼 커맨드를 등록해야 `/skill-name`으로 슬래시 커맨드 사용이 가능하다. 스킬래퍼 형식:
+
+```yaml
+---
+description: <한 줄 설명>
+allowed-tools: <필요 도구>
+plugin: <플러그인명>
+---
+
+Read and follow the skill definition at:
+<SKILL.md 절대경로>
+```
+
 ### Frontmatter 규칙
 
 **Commands**: `plugin: <name>` 마커 필수 (충돌 감지용)
