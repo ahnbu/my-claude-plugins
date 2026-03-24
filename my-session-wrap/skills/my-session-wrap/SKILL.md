@@ -179,12 +179,12 @@ SUMMARY_SCRIPT=$(find "$HOME/.claude" -path "*/my-session-wrap/scripts/extract-s
 이 대화의 hook 피드백에서 `[handoff_script=...]`를 찾아 해당 경로를 사용한다.
 
 ```bash
-bash "<handoff_script 경로>" "" "<요약>"
+node "<handoff_script 경로>" "" "<요약>"
 ```
 
 - `<handoff_script 경로>`: hook 피드백의 `[handoff_script=...]`에서 추출한 절대경로
 - `<요약>`: 세션 작업 내용 3-4단어 요약
-- hook 피드백에 `handoff_script`가 없으면: `find "$HOME/.claude" -path "*/my-session-wrap/scripts/next-handoff.sh" -print -quit` 로 폴백
+- hook 피드백에 `handoff_script`가 없으면: `find "$HOME/.claude" -path "*/my-session-wrap/scripts/next-handoff.mjs" -print -quit` 로 폴백
 
 스크립트는 ProjectRoot를 다음 우선순위로 자동 결정한다:
 1. 첫 번째 인자 (명시적 경로) — 비워두면 자동 탐색
