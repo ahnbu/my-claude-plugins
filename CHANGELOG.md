@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-24 | chore | - | `my-session-wrap,my-session-dashboard` ensure-commands.js 원본 삭제 완료 — .bak 전환 커밋 마무리 |
 | 2026-03-24 | chore | - | `my-session-dashboard` hooks/ 미사용 파일 정리 — ensure-commands.js → .bak 전환, hooks.json SessionStart 빈 배열로 정리 |
 | 2026-03-24 | chore | - | `my-session-wrap` hooks/ 미사용 파일 정리 — ensure-commands.js → .bak 전환, hooks.json SessionStart 죽은 참조 3개 제거 |
 | 2026-03-23 | docs | - | `_docs` session-timeline 스킬 복구 + 소요 열 추가 작업 문서 |
