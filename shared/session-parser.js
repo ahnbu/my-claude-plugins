@@ -5,6 +5,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const {
+  extractSlashCommands,
   findToolResults,
   findToolUses,
   getTextContent,
@@ -240,6 +241,7 @@ function processSession(filePath) {
   const models = new Set();
   const toolNames = {};
   const toolUseIdMap = {};
+  const slashCommands = [];
   const messages = [];
 
   // plan_slug: 세션이 어떤 플랜에서 시작됐는지 (linkedSessionId 연결용)
@@ -264,6 +266,8 @@ function processSession(filePath) {
 
       // 실제 사용자 텍스트 판정: isMeta 제외 (스킬 확장 프롬프트는 시스템 자동 주입)
       const rawText = getTextFromMessage(entry.message);
+      const cmds = extractSlashCommands(rawText);
+      if (cmds.length > 0) slashCommands.push(...cmds);
       const cleanText = stripSystemTags(rawText);
       const isUserText = !entry.isMeta && cleanText.trim();
       if (isUserText) {
@@ -368,6 +372,7 @@ function processSession(filePath) {
     totalInputTokens,
     totalOutputTokens,
     toolNames,
+    slashCommands,
     firstMessage: displayFirstMsg.substring(0, 200),
     projectDisplay: project,
     filePath: absFilePath,

@@ -97,7 +97,9 @@ class SessionDB {
         -- plan slug (session JSONL에서 읽힌 plan 참조)
         plan_slug         TEXT,
         -- codex 전용
-        originator        TEXT
+        originator        TEXT,
+        -- slash commands
+        slash_commands    TEXT
       )
     `);
     this.db.exec(`
@@ -546,8 +548,8 @@ class SessionDB {
          models, user_entry_count, user_text_message_count, tool_result_count,
          tool_use_count, error_count, total_input_tokens, total_output_tokens,
          tool_names, first_message, file_path, mtime,
-         slug, is_completed, char_count, linked_session_id, plan_slug, originator)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         slug, is_completed, char_count, linked_session_id, plan_slug, originator, slash_commands)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       metadata.sessionId,
       metadata.type || "session",
@@ -574,7 +576,8 @@ class SessionDB {
       metadata.charCount || 0,
       metadata.linkedSessionId || null,
       metadata.planSlug || null,
-      metadata.originator || null
+      metadata.originator || null,
+      JSON.stringify(metadata.slashCommands || [])
     );
   }
 

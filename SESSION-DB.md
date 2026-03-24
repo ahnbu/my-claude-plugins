@@ -346,6 +346,7 @@ node shared/query-sessions.js by-project "my-claude-plugins"
 
 | 날짜 | 카테고리 | 변경 내용 | 관련 커밋 |
 |------|---------|---------|----------|
+| 2026-03-24 | 스키마 | sessions 테이블에 `slash_commands TEXT` 컬럼 추가 — `<command-name>` 태그에서 슬래시 커맨드 목록 추출하여 JSON 배열로 저장. `extractSlashCommands()` text-utils.js에 추가, session-parser.js processSession()에 집계 로직 반영 | — |
 | 2026-03-23 | 스키마 | sessions 테이블에 `error_count` 컬럼 추가 (is_error=true인 tool_result 카운트). 기존 DB 마이그레이션 포함 (ALTER TABLE + mtime=0 강제 재동기화) | — |
 | 2026-03-20 | 설명 | §1 개요에 데이터 계층 비교표 2개 추가 (JSONL→DB 계층별 용도·크기, messages vs events 세부 구성) | — |
 | 2026-03-20 | 동기화 | `_syncGeminiDir()` — 동일 UUID 중복 파일 sentinel 처리: `_upsertSession` 전 기존 session_id 확인, 중복 시 `gemini_excluded` sentinel로 저장하여 매빌드 "NEW" 반복 방지 | — |

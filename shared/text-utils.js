@@ -9,6 +9,17 @@ function parseTimestamp(value) {
   return Number.isNaN(ms) ? null : ms;
 }
 
+function extractSlashCommands(text) {
+  if (!text) return [];
+  const re = /<command-name>([^<]+)<\/command-name>/gi;
+  const cmds = [];
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    cmds.push(m[1].trim());
+  }
+  return cmds;
+}
+
 function stripSystemTags(text) {
   if (!text) return "";
   return text
@@ -168,6 +179,7 @@ function toPosixPath(value) {
 module.exports = {
   cleanToolResultText,
   extractPaths,
+  extractSlashCommands,
   extractPersistedOutputPath,
   findToolResults,
   findToolUses,
