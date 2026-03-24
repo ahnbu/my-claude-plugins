@@ -15,6 +15,24 @@ description: "최신 handoff를 읽고 이전 세션 컨텍스트를 재수립. 
 - Session ID가 없으면 → **경로 B (handoff 기반, 기존 흐름)**
 
 ### 경로 A: 세션 파일 기반 복원
+
+#### A-1: DB Fast-path (우선)
+1. DB 조회 (Claude 스코프 우선):
+   ```
+   node ~/.claude/my-claude-plugins/shared/query-sessions.js get <sessionId>
+   ```
+   - AI 스코프 미명시 시 `--scope claude` 적용 (Claude 우선 조회)
+   - 출력 JSON: `{ session_id, title, project, file_path, keywords, first_message, ... }`
+2. DB 결과가 있으면:
+   - `file_path`로 JSONL 파일을 직접 Read (Glob 불필요)
+   - 컨텍스트 요약 출력:
+     - **세션 제목**: `title` 필드
+     - **프로젝트**: `project` 필드
+     - **키워드**: `keywords` 배열
+     - **마지막 작업**: JSONL 마지막 assistant 메시지 기준
+3. DB 결과 없으면 → A-2 Glob 폴백으로 진행
+
+#### A-2: Glob 폴백
 1. `~/.claude/projects/*/{sessionId}.jsonl` Glob으로 파일 탐색
 2. 파일 미발견 시 → "해당 Session ID의 세션 파일을 찾을 수 없습니다" 안내 후 경로 B로 폴백
 3. 파일 발견 시 → Grep으로 type이 "user" 또는 "assistant"인 줄만 추출 후 Read로 읽기
@@ -22,8 +40,10 @@ description: "최신 handoff를 읽고 이전 세션 컨텍스트를 재수립. 
    - **작업 디렉토리**: cwd 필드
    - **대화 요약**: 주요 user/assistant 메시지 흐름
    - **마지막 작업**: 마지막 assistant 메시지 기준
-5. "위 컨텍스트로 이어서 작업할까요?" AskUserQuestion 확인
-6. 승인 시 마지막 작업 지점부터 작업 개시
+
+#### A-3: 공통 완료 처리
+- "위 컨텍스트로 이어서 작업할까요?" AskUserQuestion 확인
+- 승인 시 마지막 작업 지점부터 작업 개시
 
 ### 경로 B: handoff 기반 복원 (기존)
 1. handoff 검색 (다단계 탐색):

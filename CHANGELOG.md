@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-24 | feat | - | `my-session-wrap` continue 스킬: 세션 ID Path A를 DB fast-path로 개선 — query-sessions.js 직접 조회로 Glob 대체, Claude 스코프 우선 |
 | 2026-03-24 | fix | - | `shared` session-db: getSession 응답에 slashCommands 필드 추가 — slash_commands 컬럼 파싱 포함 |
 | 2026-03-24 | fix | - | `my-session-wrap` SKILL.md .sh → .mjs 통일 — history-insight/session-analyzer/my-session-wrap 스킬 스크립트 명령어 전환 |
 | 2026-03-24 | docs | - | `_docs` 슬래시 커맨드 추적 문서 Phase 2 업데이트 — UI 표시, 대화 뷰 버그, DB 재파싱 작업 내역 추가 |
