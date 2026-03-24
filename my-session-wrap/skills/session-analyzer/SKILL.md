@@ -48,7 +48,7 @@ Session files are located in `~/.claude/`:
 
 Use script to locate files:
 ```bash
-scripts/find-session-files.sh {sessionId}
+node scripts/find-session-files.mjs {sessionId}
 ```
 
 ### Step 1.2: Verify Files Exist
@@ -119,7 +119,7 @@ SubagentStop with query: {agent-id}
 
 Use script:
 ```bash
-scripts/extract-subagent-calls.sh {debug-log-path}
+node scripts/extract-subagent-calls.mjs {debug-log-path}
 ```
 
 ### Step 3.2: Extract Hook Events
@@ -135,7 +135,7 @@ permissionDecision: allow/deny
 
 Use script:
 ```bash
-scripts/extract-hook-events.sh {debug-log-path}
+node scripts/extract-hook-events.mjs {debug-log-path}
 ```
 
 ### Step 3.3: Extract Tool Calls

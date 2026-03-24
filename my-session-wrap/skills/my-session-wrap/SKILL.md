@@ -26,7 +26,7 @@ Step 4. 규칙 후보 확인 + 재개 안내
 ## Step 0: 런타임 감지
 
 ```bash
-pwsh -File "$HOME/.claude/skills/session-find/scripts/detect-runtime.ps1"
+node "$HOME/.claude/skills/session-find/scripts/detect-runtime.mjs"
 ```
 
 결과: `claude` | `codex` | `gemini` | `unknown`

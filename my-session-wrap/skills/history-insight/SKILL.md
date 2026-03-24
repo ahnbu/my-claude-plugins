@@ -73,9 +73,9 @@ Session files found?
 
 #### 1-3 Files
 
-직접 Read로 JSONL 파싱. 파일이 크면(≥5000 tokens) `extract-session.sh` 사용:
+직접 Read로 JSONL 파싱. 파일이 크면(≥5000 tokens) `extract-session.mjs` 사용:
 ```bash
-scripts/extract-session.sh <session.jsonl>
+node scripts/extract-session.mjs <session.jsonl>
 ```
 
 #### 4+ Files: Batch Extract Pipeline
