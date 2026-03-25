@@ -133,12 +133,14 @@ function parseBQContent(content) {
 }
 
 // --- Build YAML frontmatter block ---
+const FM_KEYS = ["title", "created", "tags", "session_id", "session_path", "plan"];
+const REMOVE_KEYS = new Set(["date", "tokens_in", "tokens_out", "tools", "status"]);
+
 function buildFrontmatter(fields) {
-  const KEYS = ["title", "date", "session_id", "session_path", "tokens_in", "tokens_out", "tools", "status"];
   const needsQuote = (v) => /[:#\[\]{},&*?|>!%@`]/.test(v) || v.includes('"');
   const lines = ["---"];
-  for (const key of KEYS) {
-    const val = String(fields[key] || "");
+  for (const key of FM_KEYS) {
+    const val = String(fields[key] ?? "");
     if (val) {
       lines.push(needsQuote(val) ? `${key}: "${val.replace(/"/g, '\\"')}"` : `${key}: ${val}`);
     } else {
@@ -147,6 +149,45 @@ function buildFrontmatter(fields) {
   }
   lines.push("---");
   return lines.join("\n");
+}
+
+// --- Normalize existing YAML frontmatter ---
+function needsNormalization(content) {
+  const end = content.indexOf("\n---", 3);
+  if (end === -1) return false;
+  const fm = content.slice(0, end);
+  return /\ndate:/.test(fm) || /\ntokens_in:/.test(fm) || /\ntokens_out:/.test(fm) ||
+         /\ntools:/.test(fm) || /\nstatus:/.test(fm);
+}
+
+function normalizeYaml(content) {
+  const end = content.indexOf("\n---", 3);
+  if (end === -1) throw new Error("YAML 종료 구분자 없음");
+
+  const fmLines = content.slice(4, end).split("\n");
+  const afterFm = content.slice(end + 4); // "\n---" 이후
+
+  const parsed = {};
+  for (const line of fmLines) {
+    const m = line.match(/^(\w+):\s*(.*)/);
+    if (m) parsed[m[1]] = m[2].trim();
+  }
+
+  // date → created 이름 변경
+  if ("date" in parsed && !("created" in parsed)) {
+    parsed.created = parsed.date;
+  }
+  // 불필요 키 제거
+  for (const key of REMOVE_KEYS) delete parsed[key];
+  // 누락 키 추가
+  for (const key of FM_KEYS) {
+    if (!(key in parsed)) parsed[key] = "";
+  }
+
+  const newFm = buildFrontmatter(parsed);
+  const result = newFm + afterFm;
+  if (!result.startsWith("---")) throw new Error("정규화 결과가 ---로 시작하지 않음");
+  return result;
 }
 
 // --- Convert BQ content → YAML frontmatter content ---
@@ -186,12 +227,45 @@ for (const f of files) {
   buckets[classify(content)].push(f);
 }
 
+// YAML 파일 중 정규화 필요한 것 추출
+const yamlNeedsFix = buckets.yaml.filter((f) => {
+  try { return needsNormalization(readFileSync(f, "utf8")); } catch { return false; }
+});
+const yamlOk = buckets.yaml.length - yamlNeedsFix.length;
+
 console.log("📊 포맷 분류:");
-console.log(`   YAML  (skip)    : ${buckets.yaml.length}건`);
+console.log(`   YAML 정상       : ${yamlOk}건`);
+console.log(`   YAML 정규화 필요: ${yamlNeedsFix.length}건`);
 console.log(`   BQ    (변환 대상): ${buckets.bq.length}건`);
 console.log(`   Bullet (경고)   : ${buckets.bullet.length}건`);
 console.log(`   Table  (경고)   : ${buckets.table.length}건`);
 console.log(`   Unknown(경고)   : ${buckets.unknown.length}건\n`);
+
+// --- YAML normalization (date→created, 불필요 키 제거) ---
+if (yamlNeedsFix.length > 0) {
+  const mode = APPLY ? "✅ 실제 변환" : "🧪 dry-run";
+  console.log(`🔧 YAML 정규화 ${mode}:`);
+  let ok = 0, fail = 0;
+
+  for (const f of yamlNeedsFix) {
+    const content = readFileSync(f, "utf8");
+    try {
+      const newContent = normalizeYaml(content);
+      if (APPLY) {
+        writeFileSync(f, newContent, "utf8");
+        console.log(`   ✅ ${f}`);
+      } else {
+        console.log(`   → ${f}`);
+      }
+      ok++;
+    } catch (err) {
+      console.log(`   ❌ FAIL: ${f}`);
+      console.log(`      ${err.message}`);
+      fail++;
+    }
+  }
+  console.log(`\n   ${APPLY ? "정규화 완료" : "정규화 예정"}: ${ok}건 | 실패: ${fail}건\n`);
+}
 
 // --- BQ conversion ---
 if (buckets.bq.length > 0) {
