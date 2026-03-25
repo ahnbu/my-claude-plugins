@@ -11,7 +11,7 @@
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
 | 2026-03-25 | fix | - | `my-session-wrap` template.md 래퍼 제거 — `# Handoff 문서 템플릿` 헤더·```markdown 블록 제거, next-handoff.mjs가 YAML frontmatter부터 직접 복사하도록 수정 |
-| 2026-03-25 | docs | - | `_docs` wrap 스킬 handoff YAML 전환 설계 문서 추가 |
+| 2026-03-25 | docs | - | `_docs` wrap 스킬 handoff YAML 전환 설계 문서 추가 — BQ vs YAML 비교분석, 전환 결정 근거, template.md Read 미실행 원인 분석 |
 | 2026-03-24 | docs | - | `my-session-wrap` handoff 형식 불일치 원인 분석 문서 추가 — ai-study 8건·90_자료수집 3건 JSONL 대조, template.md Read 미실행이 YAML 발생 원인 확정 |
 | 2026-03-24 | fix | - | `my-session-wrap` SKILL.md 스크립트 참조 .sh → .mjs 잔여 수정 — history-insight/session-analyzer .sh 파일 삭제 + SKILL.md 참조 업데이트 |
 | 2026-03-24 | feat | - | `my-session-wrap` continue 스킬: 세션 ID Path A를 DB fast-path로 개선 — query-sessions.js 직접 조회로 Glob 대체, Claude 스코프 우선 |
