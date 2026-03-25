@@ -53,18 +53,19 @@ description: "최신 handoff를 읽고 이전 세션 컨텍스트를 재수립. 
    ```
    - 출력 JSON: `{ found: boolean, session_id?, cp?, remaining?, ts? }`
 2. `found: false` → 경로 C로 넘어감
-3. `found: true, count == 1` → AskUserQuestion으로 제안:
-   > "컨텍스트 {cp}%에서 중단된 세션이 있습니다.
-   > 세션 ID: {session_id} (기록 시각: {ts})
-   > 이어서 진행할까요? (예/아니오)"
-4. `found: true, count >= 2` → AskUserQuestion으로 목록 표시:
-   > "컨텍스트 한계 세션 {count}개가 있습니다:
-   > 1. {session_id} — {cp}% ({ts})
-   > 2. {session_id} — {cp}% ({ts})
-   > ...
-   > 번호를 선택하거나 '건너뛰기'를 입력하세요."
-5. 승인/선택 시 → **경로 A** 실행 (해당 `session_id`로)
-6. 거절/건너뛰기 시 → 경로 C로 넘어감
+3. `found: true` → 텍스트로 목록 출력 (AskUserQuestion 사용 금지):
+   ```
+   컨텍스트 만료 세션 {count}개:
+   1. {sessions[0].display}
+   2. {sessions[1].display}
+   ...
+   0. 건너뛰기
+
+   번호를 입력하세요:
+   ```
+4. 사용자 입력 대기 (일반 채팅 응답)
+5. 번호 선택 시 → **경로 A** 실행 (해당 `session_id`로)
+6. 0 또는 건너뛰기 시 → 경로 C로 넘어감
 
 ### 경로 C: handoff 기반 복원 (기존)
 1. handoff 검색 (다단계 탐색):
