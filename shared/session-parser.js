@@ -3,6 +3,7 @@
 // build.js와 session-normalizer.js에서 추출한 공유 파싱 로직
 
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
 const {
   extractCodexSkills,
@@ -389,6 +390,24 @@ function processSession(filePath) {
   return { metadata, messages: mergedMessages };
 }
 
+// ── Codex 스킬 화이트리스트 빌드 ──
+// ~/.codex/skills/ 하위 디렉토리명을 스캔하여 Set 반환 (_/. 시작 제외)
+function buildCodexSkillWhitelist() {
+  const skillsDir = path.join(os.homedir(), ".codex", "skills");
+  if (!fs.existsSync(skillsDir)) return null;
+  const entries = fs.readdirSync(skillsDir, { withFileTypes: true });
+  return new Set(
+    entries
+      .filter(
+        (e) =>
+          e.isDirectory() &&
+          !e.name.startsWith("_") &&
+          !e.name.startsWith(".")
+      )
+      .map((e) => e.name)
+  );
+}
+
 // ── Codex 세션 파싱 ──
 function processCodexSession(filePath) {
   const entries = parseJSONL(filePath);
@@ -417,6 +436,7 @@ function processCodexSession(filePath) {
 
   const messages = [];
   const slashCommands = [];
+  const codexSkillWhitelist = buildCodexSkillWhitelist();
   let totalInputTokens = 0;
   let totalOutputTokens = 0;
   let lastTokenEntry = null;
@@ -430,7 +450,7 @@ function processCodexSession(filePath) {
     if (entry.type === "event_msg") {
       const ep = entry.payload || {};
       if (ep.type === "user_message" && ep.message) {
-        const codexCmds = extractCodexSkills(ep.message);
+        const codexCmds = extractCodexSkills(ep.message, codexSkillWhitelist);
         if (codexCmds.length > 0) slashCommands.push(...codexCmds);
         messages.push({
           role: "user",

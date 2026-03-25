@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-25 | feat | - | changelog-add-row.mjs 추가 + Codex 스킬 화이트리스트 필터 (extractCodexSkills whitelist 파라미터) |
 | 2026-03-25 | feat | - | migrate-handoff-to-yaml YAML 정규화 기능 추가 — date→created 변환, 불필요 키 제거, FM_KEYS/REMOVE_KEYS 상수화 |
 | 2026-03-25 | refactor | - | handoff template frontmatter 정리 — date→created·불필요 키 제거·tags/plan 추가, next-handoff session_id 인자 지원 |
 | 2026-03-25 | refactor | - | Co-Authored-By 하드코딩 제거, detect-runtime --coauthor 스크립트로 런타임 감지 |

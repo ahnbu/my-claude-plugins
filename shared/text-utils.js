@@ -177,13 +177,17 @@ function toPosixPath(value) {
 }
 
 // Codex $skill 패턴 (환경변수 $PATH 등 전체대문자 제외)
-function extractCodexSkills(text) {
+// whitelist가 주어지면 교차 필터, 없으면 기존 동작 (하위호환)
+function extractCodexSkills(text, whitelist) {
   if (!text) return [];
   const re = /\$([a-zA-Z][a-zA-Z0-9_-]+)/g;
   const cmds = [];
   let m;
   while ((m = re.exec(text)) !== null) {
-    if (m[1] !== m[1].toUpperCase()) cmds.push("$" + m[1]);
+    const name = m[1];
+    if (name === name.toUpperCase()) continue;          // $PATH 등 환경변수 제외
+    if (whitelist && !whitelist.has(name)) continue;    // 화이트리스트 필터
+    cmds.push("$" + name);
   }
   return cmds;
 }

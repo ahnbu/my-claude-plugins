@@ -348,6 +348,7 @@ node shared/query-sessions.js by-project "my-claude-plugins"
 
 | 날짜 | 카테고리 | 변경 내용 | 관련 커밋 |
 |------|---------|---------|----------|
+| 2026-03-25 | 파일 맵 | `shared/text-utils.js` `extractCodexSkills()` — `whitelist` 파라미터 추가 (Set). `session-parser.js` `processCodexSession()` — `buildCodexSkillWhitelist()`로 `~/.codex/skills/` 스캔, 화이트리스트 교차 필터 적용하여 노이즈 제거 | — |
 | 2026-03-25 | 스키마·파일 맵 | sessions 테이블에 `skill_calls TEXT` 컬럼 추가 — Claude Skill tool_use(AI proactive 포함)를 JSON 배열로 저장. `slash_commands` 추출을 Codex(`$skill`)/Gemini(`/skill`)/Antigravity(`/skill`) 세션으로 확장. `extractCodexSkills()`·`extractSlashSkills()` text-utils.js에 추가, session-parser.js 4개 파서에 반영 | — |
 | 2026-03-24 | 파일 맵 | `session-parser.js` — 슬래시 커맨드 전용 메시지 텍스트 복원: `cleanText` 빈 문자열 시 `cmds` 폴백으로 대화 뷰에 `/wrap` 등 표시 | — |
 | 2026-03-24 | 스키마 | sessions 테이블에 `slash_commands TEXT` 컬럼 추가 — `<command-name>` 태그에서 슬래시 커맨드 목록 추출하여 JSON 배열로 저장. `extractSlashCommands()` text-utils.js에 추가, session-parser.js processSession()에 집계 로직 반영 | — |
