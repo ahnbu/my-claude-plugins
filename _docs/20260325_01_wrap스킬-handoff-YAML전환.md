@@ -92,7 +92,7 @@ plan: "C:/Users/ahnbu/.claude/plans/virtual-cuddling-star.md"
 | next-handoff.mjs 파일 생성 기능 | `node next-handoff.mjs "" "테스트"` 실행, 파일 존재 확인 | ✅ 완료 | `handoff_20260325_04_검증테스트3.md` 생성 확인 |
 | 플레이스홀더 치환 | 생성된 파일에 `__TITLE__`, `__DATE__`, `__NN__` 대신 실제 값이 들어있는지 | ✅ 완료 | title·date·세션 순번 모두 치환 정상 |
 | SKILL.md Step 2-2, 2-3 수정 | 파일 내용 확인 | ✅ 완료 | Read→Edit 워크플로우, BQ 헤더 금지 명시 |
-| /wrap 실행 시 YAML 형식 생성 | `/wrap` 호출 후 handoff 첫 줄 `---` 확인 | ⏳ 미실행 | 다음 `/wrap` 실행 시 검증 |
+| /wrap 실행 시 YAML 형식 생성 | `/wrap` 호출 후 handoff 첫 줄 `---` 확인 | ✅ 완료 | 1행 `---`, YAML frontmatter 정상. `next-handoff.mjs` 복제 후 AI가 Edit으로만 채움 확인 (세션 f97cfda3) |
 | BQ 헤더 미생성 | 생성된 handoff에 `> 날짜:` 패턴 없는지 확인 | ✅ 완료 | 테스트 파일에 BQ 패턴 없음 확인 |
 
 > 검증 실행일: 2026-03-25 (세션 df6f94d8)
@@ -108,7 +108,7 @@ plan: "C:/Users/ahnbu/.claude/plans/virtual-cuddling-star.md"
 1. ~~template.md 헤더 → YAML frontmatter 전환~~ ✅ 완료 (2026-03-25)
 2. ~~next-handoff.mjs → template.md 복제 + 플레이스홀더 치환 후 파일 생성~~ ✅ 완료
 3. ~~SKILL.md Step 2-2, 2-3 → 스크립트가 파일 생성까지 담당한다는 지시로 업데이트~~ ✅ 완료
-4. `/wrap` 실행하여 전체 검증 ⏳
+4. ~~`/wrap` 실행하여 전체 검증~~ ✅ 완료 (2026-03-25, 세션 f97cfda3)
 
 ---
 
@@ -156,6 +156,46 @@ plan: "C:/Users/ahnbu/.claude/plans/virtual-cuddling-star.md"
 | unknown | `skills/_handoff/scrap-sns-full-정리.md` | ✅ YAML 변환 (최소) | title, date만 |
 | unknown | `ai-info/_handoff/AI-핵심채널-정리.md` | ✅ YAML 변환 (최소) | title, date만 |
 | unknown | `ai-study/_handoff/nlm-인증자동갱신-진단.md` | ✅ YAML 변환 | session_id, date |
+
+---
+
+---
+
+## 부수 버그 수정: pre-commit hook 한글 파일명 오작동
+
+### 발견 경위 (2026-03-25, 세션 f97cfda3)
+
+`/wrap` E2E 검증 중 한글 파일명 handoff(`handoff_20260325_01_wrap-YAML형식-E2E검증.md`) 전용 커밋이 CHANGELOG 필수 커밋으로 오판되어 차단됨.
+
+### 원인
+
+`git diff --cached --name-only`는 non-ASCII 파일명을 octal 인코딩으로 감싸 출력:
+```
+"_handoff/handoff_20260325_01_wrap-YAML\355\230\225...md"
+```
+hook의 `grep -v "^_handoff/"` 패턴이 줄 첫 글자 `"` 때문에 매칭 실패 → `_handoff/` 전용 커밋 스킵 로직이 무력화.
+
+### 수정
+
+두 파일 모두 `git -c core.quotepath=false` 추가 (한 줄 수정):
+
+| 파일 | 위치 |
+|------|------|
+| `git-hooks/pre-commit` | `my-claude-plugins` 레포 로컬 hook |
+| `pre-commit` | `C:/Users/ahnbu/.config/git/hooks/` 글로벌 hook |
+
+```bash
+# 변경 전
+STAGED=$(git diff --cached --name-only)
+# 변경 후
+STAGED=$(git -c core.quotepath=false diff --cached --name-only)
+```
+
+### 검증 결과
+
+한글 파일명 `_handoff/` 전용 커밋 → hook `exit 0` 정상 스킵 확인 ✅
+
+> 수정 커밋: `8335ac2` (2026-03-25, 세션 f97cfda3)
 
 ---
 

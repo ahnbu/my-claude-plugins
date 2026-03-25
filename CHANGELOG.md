@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-25 | docs | - | `_docs` wrap 스킬 YAML전환 설계 문서 — /wrap E2E 검증 완료 및 pre-commit hook 버그 수정 내역 추가 |
 | 2026-03-25 | fix | - | `git-hooks` pre-commit: 한글 파일명 _handoff 전용 커밋 스킵 오작동 수정 — `git -c core.quotepath=false` 적용 |
 | 2026-03-25 | docs | - | `_handoff` wrap YAML형식 E2E검증 handoff 추가 |
 | 2026-03-25 | docs | - | `_handoff` 누락 handoff 파일 22건 일괄 추가 (2026-03-06 ~ 2026-03-24) |
