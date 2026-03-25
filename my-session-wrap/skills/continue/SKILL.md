@@ -12,7 +12,7 @@ description: "최신 handoff를 읽고 이전 세션 컨텍스트를 재수립. 
 ### Step 0: 입력 분석
 - 사용자 메시지에서 UUID v4 패턴(`xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`) 검출
 - Session ID가 있으면 → **경로 A (세션 파일 기반)**
-- Session ID가 없으면 → **경로 B (handoff 기반, 기존 흐름)**
+- Session ID가 없으면 → **경로 B (context-warning 체크)** → 없으면 **경로 C (handoff 기반)**
 
 ### 경로 A: 세션 파일 기반 복원
 
@@ -34,7 +34,7 @@ description: "최신 handoff를 읽고 이전 세션 컨텍스트를 재수립. 
 
 #### A-2: Glob 폴백
 1. `~/.claude/projects/*/{sessionId}.jsonl` Glob으로 파일 탐색
-2. 파일 미발견 시 → "해당 Session ID의 세션 파일을 찾을 수 없습니다" 안내 후 경로 B로 폴백
+2. 파일 미발견 시 → "해당 Session ID의 세션 파일을 찾을 수 없습니다" 안내 후 경로 C로 폴백
 3. 파일 발견 시 → Grep으로 type이 "user" 또는 "assistant"인 줄만 추출 후 Read로 읽기
 4. 대화 내용에서 컨텍스트 요약 출력:
    - **작업 디렉토리**: cwd 필드
@@ -45,7 +45,28 @@ description: "최신 handoff를 읽고 이전 세션 컨텍스트를 재수립. 
 - "위 컨텍스트로 이어서 작업할까요?" AskUserQuestion 확인
 - 승인 시 마지막 작업 지점부터 작업 개시
 
-### 경로 B: handoff 기반 복원 (기존)
+### 경로 B: context-warning 기반 복원
+
+1. 스크립트 호출:
+   ```
+   node ~/.claude/my-claude-plugins/my-session-wrap/skills/continue/scripts/find-context-warning.mjs
+   ```
+   - 출력 JSON: `{ found: boolean, session_id?, cp?, remaining?, ts? }`
+2. `found: false` → 경로 C로 넘어감
+3. `found: true, count == 1` → AskUserQuestion으로 제안:
+   > "컨텍스트 {cp}%에서 중단된 세션이 있습니다.
+   > 세션 ID: {session_id} (기록 시각: {ts})
+   > 이어서 진행할까요? (예/아니오)"
+4. `found: true, count >= 2` → AskUserQuestion으로 목록 표시:
+   > "컨텍스트 한계 세션 {count}개가 있습니다:
+   > 1. {session_id} — {cp}% ({ts})
+   > 2. {session_id} — {cp}% ({ts})
+   > ...
+   > 번호를 선택하거나 '건너뛰기'를 입력하세요."
+5. 승인/선택 시 → **경로 A** 실행 (해당 `session_id`로)
+6. 거절/건너뛰기 시 → 경로 C로 넘어감
+
+### 경로 C: handoff 기반 복원 (기존)
 1. handoff 검색 (다단계 탐색):
    a. `git rev-parse --show-toplevel`로 레포 루트 확인 → `<레포루트>/_handoff/handoff_*.md` Glob 검색
    b. 미발견 또는 git 레포 아닌 경우 → CWD에서 `_handoff/handoff_*.md` Glob 검색
