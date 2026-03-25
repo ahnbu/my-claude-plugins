@@ -286,7 +286,17 @@ git -C /c/Users/.claude/my-plugin commit -m "<type>(<scope>): <한 줄 요약>"
 - 단일 레포인 경우 `git -C <레포루트>` 없이 기존처럼 `git add / git commit`으로 진행해도 동일.
 - Scope는 실제 변경 범위로 작성 (포괄값 금지).
 
-> **handoff 파일은 커밋하지 않는다.** `_handoff/`는 `.gitignore`에 등록된 세션 메타데이터이므로 git이 추적하지 않는다.
+#### 3-3. handoff 커밋 (레포별 마지막)
+
+모든 관심사 커밋 완료 후, 해당 레포의 `_handoff/` 파일을 커밋한다:
+
+```bash
+git -C <레포루트> add _handoff/
+git -C <레포루트> commit -m "docs(handoff): <세션 한줄요약>"
+```
+
+- CHANGELOG 추가 불필요 (pre-commit hook이 `_handoff/` 전용 커밋을 자동 스킵)
+- handoff 파일이 없거나 변경 없으면 이 단계 스킵
 
 ---
 

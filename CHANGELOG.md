@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-25 | feat | - | `my-session-wrap` handoff 파일 git 추적 복원 — pre-commit hook `_handoff/` 전용 커밋 예외, `.gitignore` 제거, SKILL.md Step 3-3 handoff 커밋 단계 추가 |
 | 2026-03-25 | docs | - | `_docs` wrap 스킬 handoff YAML 전환 설계 문서 — 비정형 9건 수동 전환 결과 섹션 추가 |
 | 2026-03-25 | feat | - | `my-session-wrap` migrate-handoff-to-yaml.mjs 스크립트 추가 — 최근 7일 BQ 형식 handoff 일괄 YAML 전환, dry-run 기본, --apply 실행, bullet/table/unknown 경고 출력 |
 | 2026-03-25 | fix | - | `my-session-wrap` template.md 래퍼 제거 — `# Handoff 문서 템플릿` 헤더·```markdown 블록 제거, next-handoff.mjs가 YAML frontmatter부터 직접 복사하도록 수정 |
