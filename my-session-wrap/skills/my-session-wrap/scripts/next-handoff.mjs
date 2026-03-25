@@ -5,7 +5,7 @@
 //   summary:     세션 작업 한줄요약 (미제공 시 HHMM 사용)
 
 import { execSync } from "node:child_process";
-import { existsSync, mkdirSync, readdirSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -125,6 +125,26 @@ const newFile = join(handoffDir, `handoff_${date}_${nextSeq}_${suffix}.md`);
 if (existsSync(newFile)) {
   process.stderr.write(`ERROR: ${newFile} already exists\n`);
   process.exit(1);
+}
+
+// --- Template copy ---
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const templatePath = join(__dirname, "..", "references", "template.md");
+
+if (existsSync(templatePath)) {
+  try {
+    let content = readFileSync(templatePath, "utf8");
+    const titleValue = suffix.replace(/-/g, " ");
+    content = content.replaceAll("__TITLE__", titleValue);
+    content = content.replaceAll("__DATE__", `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`);
+    content = content.replaceAll("__NN__", nextSeq);
+    writeFileSync(newFile, content, "utf8");
+  } catch (err) {
+    process.stderr.write(`WARN: template copy failed (${err.message}), outputting path only\n`);
+  }
+} else {
+  process.stderr.write(`WARN: template not found at ${templatePath}, outputting path only\n`);
 }
 
 process.stdout.write(newFile + "\n");

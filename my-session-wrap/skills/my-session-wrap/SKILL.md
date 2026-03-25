@@ -195,12 +195,18 @@ node "<handoff_script 경로>" "" "<요약>"
 handoff는 항상 `<ProjectRoot>/_handoff/handoff_YYYYMMDD_NN_요약.md`에 저장된다.
 
 - `<요약>` 자리에 실제 요약어를 채워 실행 (예: `"Junction자동화-dotfiles통합완료"`)
-- stdout으로 출력된 절대경로를 Write 도구의 대상으로 사용
+- stdout으로 출력된 절대경로는 **이미 template.md가 복제된 파일**이다 (플레이스홀더 포함)
+- 이 파일을 Read한 뒤, Edit으로 플레이스홀더를 채운다
 - **exit 1 시**: 사용자에게 오류 보고 후 중단. 직접 파일명을 결정하거나 기존 파일에 쓰는 것은 절대 금지
 
 ### 2-3. handoff 파일 작성
 
-템플릿은 `references/template.md` 참조. 메인 에이전트가 세션 컨텍스트에서 직접 작성한다.
+`next-handoff.mjs`가 생성한 파일을 **Read한 뒤, Edit으로** 다음 필드를 채운다:
+
+- YAML frontmatter: `session_id`, `session_path`, `tokens_in`, `tokens_out`, `tools`, `status`
+- 본문 §1~§6: 각 섹션을 세션 컨텍스트로 작성
+
+`title`, `date`, 세션 순번은 스크립트가 미리 채움. **YAML frontmatter 형식을 변경하거나 BQ(`>`) 헤더를 추가하지 마라.**
 
 - 각 항목은 실제 내용이 있을 때만 포함하고, 해당 없는 항목은 생략
 - `SESSION_SUMMARY` 조회 성공 시: 헤더에 토큰·도구 통계를 포함하고, keyEvents로 진행 현황을 교차 검증한다
