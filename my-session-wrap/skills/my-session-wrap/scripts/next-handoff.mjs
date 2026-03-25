@@ -8,6 +8,7 @@ import { execSync } from "node:child_process";
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
+import os from "node:os";
 
 const MARKERS = ["CHANGELOG.md", "AGENTS.md", "CLAUDE.md", "GEMINI.md"];
 
@@ -85,8 +86,63 @@ function resolveProjectRoot(explicitRoot) {
   process.exit(1);
 }
 
+// --- Plan path resolution ---
+function findPlanPath(sessionId) {
+  if (!sessionId || !sessionId.trim()) return "";
+  const scriptPath = join(os.homedir(), ".claude", "skills", "doc-save", "scripts", "find_linked_plan.js");
+  if (!existsSync(scriptPath)) return "";
+  try {
+    const result = execSync(`node "${scriptPath}" "${sessionId}"`, {
+      encoding: "utf8",
+      stdio: ["pipe", "pipe", "pipe"],
+    }).trim();
+    const parsed = JSON.parse(result);
+    if (parsed.found && parsed.planPath) return parsed.planPath.replace(/\\/g, "/");
+  } catch {
+    // ignore
+  }
+  return "";
+}
+
+// --- Session path resolution ---
+function findSessionPath(sessionId) {
+  if (!sessionId || !sessionId.trim()) return "";
+  const projectsDir = join(os.homedir(), ".claude", "projects");
+  if (!existsSync(projectsDir)) return "";
+  try {
+    for (const dir of readdirSync(projectsDir)) {
+      const candidate = join(projectsDir, dir, `${sessionId}.jsonl`);
+      if (existsSync(candidate)) return candidate.replace(/\\/g, "/");
+    }
+  } catch {
+    // ignore
+  }
+  return "";
+}
+
+// --- Shared utils ---
+const now = new Date();
+const pad2 = (n) => String(n).padStart(2, "0");
+
 // --- Main ---
-const [, , rawRoot = "", rawSummary = ""] = process.argv;
+const args = process.argv.slice(2);
+const jsonMode = args[0] === "--json";
+
+if (jsonMode) {
+  // --json mode: output frontmatter fields as JSON, no file creation
+  // Usage: node next-handoff.mjs --json "" "<session_id>"
+  const rawSessionId = args[2] || "";
+  const sessionId = rawSessionId.trim();
+  process.stdout.write(JSON.stringify({
+    created: `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())} ${pad2(now.getHours())}:${pad2(now.getMinutes())}`,
+    session_id: sessionId,
+    session_path: findSessionPath(sessionId),
+    plan: findPlanPath(sessionId),
+  }) + "\n");
+  process.exit(0);
+}
+
+const [rawRoot = "", rawSummary = "", rawSessionId = ""] = args;
 
 const projectRoot = resolveProjectRoot(rawRoot || "");
 const handoffDir = join(projectRoot, "_handoff");
@@ -94,8 +150,6 @@ const handoffDir = join(projectRoot, "_handoff");
 mkdirSync(handoffDir, { recursive: true });
 
 // Date string YYYYMMDD
-const now = new Date();
-const pad2 = (n) => String(n).padStart(2, "0");
 const date = `${now.getFullYear()}${pad2(now.getMonth() + 1)}${pad2(now.getDate())}`;
 
 // Summary suffix
@@ -136,9 +190,15 @@ if (existsSync(templatePath)) {
   try {
     let content = readFileSync(templatePath, "utf8");
     const titleValue = suffix.replace(/-/g, " ");
+    const sessionId = rawSessionId.trim();
+    const sessionPath = findSessionPath(sessionId);
     content = content.replaceAll("__TITLE__", titleValue);
-    content = content.replaceAll("__DATE__", `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`);
+    content = content.replaceAll("__DATE__", `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())} ${pad2(now.getHours())}:${pad2(now.getMinutes())}`);
     content = content.replaceAll("__NN__", nextSeq);
+    const planPath = findPlanPath(sessionId);
+    content = content.replaceAll("__SESSION_ID__", sessionId);
+    content = content.replaceAll("__SESSION_PATH__", sessionPath);
+    content = content.replaceAll("__PLAN__", planPath);
     writeFileSync(newFile, content, "utf8");
   } catch (err) {
     process.stderr.write(`WARN: template copy failed (${err.message}), outputting path only\n`);

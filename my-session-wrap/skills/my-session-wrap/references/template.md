@@ -1,12 +1,10 @@
 ---
 title: __TITLE__
-date: __DATE__
-session_id:
-session_path:
-tokens_in:
-tokens_out:
-tools:
-status:
+created: __DATE__
+tags:                    # 필수 — 프로젝트명·작업유형 등
+session_id: __SESSION_ID__
+session_path: __SESSION_PATH__
+plan: __PLAN__
 ---
 
 # __TITLE__ (세션 __NN__)

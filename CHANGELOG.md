@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-25 | refactor | - | handoff template frontmatter 정리 — date→created·불필요 키 제거·tags/plan 추가, next-handoff session_id 인자 지원 |
 | 2026-03-25 | refactor | - | Co-Authored-By 하드코딩 제거, detect-runtime --coauthor 스크립트로 런타임 감지 |
 | 2026-03-25 | docs | - | `_docs` slash_commands 확장·skill_calls 신설 구현 문서 추가 (plan 원문 포함) |
 | 2026-03-25 | docs | - | `_docs` context-warning 임계치 80%로 하향 반영 — 설계 문서 갱신 |
