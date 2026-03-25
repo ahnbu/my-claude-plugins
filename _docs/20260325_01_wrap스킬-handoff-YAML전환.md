@@ -143,21 +143,19 @@ plan: "C:/Users/ahnbu/.claude/plans/virtual-cuddling-star.md"
 | Table | 3건 | ⚠️ 수동 |
 | Unknown | 5건 | ⚠️ 수동 |
 
-**수동 처리 필요 9건**:
+**비정형 9건 수동 전환 결과 (2026-03-25, 세션 df6f94d8)**:
 
-| 유형 | 파일 (경로 축약) |
-|------|------|
-| bullet | `ai-study/.../handoff_20260320_01_bypass_2차_이중설치_발견_native_재설치_대기.md` |
-| table | `my-claude-plugins/_handoff/handoff_20260319_01_isMeta스킬본문제외.md` |
-| table | `my-claude-plugins/_handoff/handoff_20260321_01_세션대시보드-검색잘림-수정.md` |
-| table | `my-claude-plugins/_handoff/handoff_20260321_02_대시보드-터미널창-숨김.md` |
-| unknown | `my-claude-plugins/_handoff/handoff_20260325_01_테스트-검증.md` (구 template 래퍼) |
-| unknown | `skills/_handoff/handoff_20260319_01_ai-outputs경로-40AI에서05AI로-일괄업데이트.md` |
-| unknown | `skills/_handoff/handoff_20260320_01_scrap-sns-full-게이트강화-doc-save-정리.md` |
-| unknown | `ai-info/_handoff/handoff_20260320_01_AI-핵심채널-정리-완료.md` |
-| unknown | `ai-study/_handoff/handoff_20260323_02_nlm-인증자동갱신-진단완료.md` |
-
-> 수동 처리 대상은 bullet 헤더(`- **세션 ID**:`) 또는 비정형(`## 세션 요약` 직결) 구조. 세션 메타가 없거나 불완전하므로 변환 실익 낮음 — 무시 가능.
+| 유형 | 파일 (경로 축약) | 처리 | 추출 필드 |
+|------|------|------|------|
+| bullet | `ai-study/.../bypass_2차_이중설치_발견_native_재설치_대기.md` | ✅ YAML 변환 | session_id, date, status |
+| table | `my-claude-plugins/_handoff/isMeta스킬본문제외.md` | ✅ YAML 변환 | date, session_id |
+| table | `my-claude-plugins/_handoff/검색잘림-수정.md` | ✅ YAML 변환 | 전 필드 완비 |
+| table | `my-claude-plugins/_handoff/터미널창-숨김.md` | ✅ YAML 변환 | session_id, session_path |
+| unknown | `my-claude-plugins/_handoff/테스트-검증.md` | 🗑️ 삭제 | 구 template 래퍼 잔재 |
+| unknown | `skills/_handoff/ai-outputs경로-업데이트.md` | ✅ YAML 변환 | session_id, date, status |
+| unknown | `skills/_handoff/scrap-sns-full-정리.md` | ✅ YAML 변환 (최소) | title, date만 |
+| unknown | `ai-info/_handoff/AI-핵심채널-정리.md` | ✅ YAML 변환 (최소) | title, date만 |
+| unknown | `ai-study/_handoff/nlm-인증자동갱신-진단.md` | ✅ YAML 변환 | session_id, date |
 
 ---
 
