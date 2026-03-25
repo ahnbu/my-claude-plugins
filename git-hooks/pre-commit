@@ -10,7 +10,7 @@
 set -e
 
 # ── 1. CHANGELOG.md 검증 ─────────────────────────────────────────────────────
-STAGED=$(git diff --cached --name-only)
+STAGED=$(git -c core.quotepath=false diff --cached --name-only)
 
 # _handoff/ 전용 커밋은 CHANGELOG 검증 스킵
 NON_HANDOFF=$(echo "$STAGED" | grep -v "^_handoff/" || true)
