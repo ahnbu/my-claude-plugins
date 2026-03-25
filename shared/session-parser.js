@@ -5,7 +5,9 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const {
+  extractCodexSkills,
   extractSlashCommands,
+  extractSlashSkills,
   findToolResults,
   findToolUses,
   getTextContent,
@@ -242,6 +244,7 @@ function processSession(filePath) {
   const toolNames = {};
   const toolUseIdMap = {};
   const slashCommands = [];
+  const skillCalls = [];
   const messages = [];
 
   // plan_slug: 세션이 어떤 플랜에서 시작됐는지 (linkedSessionId 연결용)
@@ -314,6 +317,9 @@ function processSession(filePath) {
             toolNames[name] = (toolNames[name] || 0) + 1;
             tools.push({ name, input: block.input });
             if (block.id) toolUseIdMap[block.id] = { name, input: block.input };
+            if (block.name === "Skill" && block.input?.skill) {
+              skillCalls.push(block.input.skill);
+            }
           } else if (block.type === "thinking" && block.thinking) {
             textParts.push(`[thinking] ${block.thinking}`);
           }
@@ -373,6 +379,7 @@ function processSession(filePath) {
     totalOutputTokens,
     toolNames,
     slashCommands,
+    skillCalls,
     firstMessage: displayFirstMsg.substring(0, 200),
     projectDisplay: project,
     filePath: absFilePath,
@@ -409,6 +416,7 @@ function processCodexSession(filePath) {
   }
 
   const messages = [];
+  const slashCommands = [];
   let totalInputTokens = 0;
   let totalOutputTokens = 0;
   let lastTokenEntry = null;
@@ -422,6 +430,8 @@ function processCodexSession(filePath) {
     if (entry.type === "event_msg") {
       const ep = entry.payload || {};
       if (ep.type === "user_message" && ep.message) {
+        const codexCmds = extractCodexSkills(ep.message);
+        if (codexCmds.length > 0) slashCommands.push(...codexCmds);
         messages.push({
           role: "user",
           subtype: "user_input",
@@ -519,6 +529,7 @@ function processCodexSession(filePath) {
     totalInputTokens,
     totalOutputTokens,
     toolNames,
+    slashCommands,
     firstMessage: firstMsgText.substring(0, 200),
     filePath: absFilePath,
   };
@@ -879,10 +890,13 @@ function processGeminiSession(filePath, projectRoot) {
 
   // 메시지 배열 구축
   const builtMessages = [];
+  const slashCommands = [];
   for (const msg of messages) {
     if (msg.type === "user") {
       const contentArr = Array.isArray(msg.content) ? msg.content : [];
       const text = contentArr.map(c => c.text || "").join("\n");
+      const gemCmds = extractSlashSkills(text);
+      if (gemCmds.length > 0) slashCommands.push(...gemCmds);
       builtMessages.push({
         role: "user",
         subtype: "user_input",
@@ -931,6 +945,7 @@ function processGeminiSession(filePath, projectRoot) {
     totalInputTokens,
     totalOutputTokens,
     toolNames,
+    slashCommands,
     firstMessage: firstMsgText.substring(0, 200),
     filePath: absFilePath,
   };
@@ -1039,8 +1054,11 @@ function processAntigravitySession(conversation, exportFilePath) {
 
   // 메시지 배열
   const builtMessages = [];
+  const slashCommands = [];
   for (const msg of rawMessages) {
     if (msg.role === "user") {
+      const agCmds = extractSlashSkills(msg.content || "");
+      if (agCmds.length > 0) slashCommands.push(...agCmds);
       builtMessages.push({
         role: "user",
         subtype: "user_input",
@@ -1091,6 +1109,7 @@ function processAntigravitySession(conversation, exportFilePath) {
     totalInputTokens: 0,
     totalOutputTokens: 0,
     toolNames,
+    slashCommands,
     firstMessage: firstMsgText.substring(0, 200),
     filePath: exportFilePath || "",
   };

@@ -176,10 +176,36 @@ function toPosixPath(value) {
   return value ? value.split(path.sep).join("/") : "";
 }
 
+// Codex $skill 패턴 (환경변수 $PATH 등 전체대문자 제외)
+function extractCodexSkills(text) {
+  if (!text) return [];
+  const re = /\$([a-zA-Z][a-zA-Z0-9_-]+)/g;
+  const cmds = [];
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    if (m[1] !== m[1].toUpperCase()) cmds.push("$" + m[1]);
+  }
+  return cmds;
+}
+
+// Gemini/Antigravity /skill 패턴
+function extractSlashSkills(text) {
+  if (!text) return [];
+  const re = /^\/([a-zA-Z][a-zA-Z0-9_-]+)/gm;
+  const cmds = [];
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    cmds.push("/" + m[1]);
+  }
+  return cmds;
+}
+
 module.exports = {
   cleanToolResultText,
+  extractCodexSkills,
   extractPaths,
   extractSlashCommands,
+  extractSlashSkills,
   extractPersistedOutputPath,
   findToolResults,
   findToolUses,

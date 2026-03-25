@@ -99,7 +99,9 @@ class SessionDB {
         -- codex 전용
         originator        TEXT,
         -- slash commands
-        slash_commands    TEXT
+        slash_commands    TEXT,
+        -- skill tool_use 호출 (AI proactive 포함)
+        skill_calls       TEXT
       )
     `);
     this.db.exec(`
@@ -157,6 +159,11 @@ class SessionDB {
     // 마이그레이션: error_count 컬럼 추가
     if (!cols.includes("error_count")) {
       this.db.exec("ALTER TABLE sessions ADD COLUMN error_count INTEGER DEFAULT 0");
+      this.db.exec("UPDATE sessions SET mtime = 0"); // 강제 재동기화
+    }
+    // 마이그레이션: skill_calls 컬럼 추가
+    if (!cols.includes("skill_calls")) {
+      this.db.exec("ALTER TABLE sessions ADD COLUMN skill_calls TEXT");
       this.db.exec("UPDATE sessions SET mtime = 0"); // 강제 재동기화
     }
   }
@@ -548,8 +555,8 @@ class SessionDB {
          models, user_entry_count, user_text_message_count, tool_result_count,
          tool_use_count, error_count, total_input_tokens, total_output_tokens,
          tool_names, first_message, file_path, mtime,
-         slug, is_completed, char_count, linked_session_id, plan_slug, originator, slash_commands)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         slug, is_completed, char_count, linked_session_id, plan_slug, originator, slash_commands, skill_calls)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       metadata.sessionId,
       metadata.type || "session",
@@ -577,7 +584,8 @@ class SessionDB {
       metadata.linkedSessionId || null,
       metadata.planSlug || null,
       metadata.originator || null,
-      JSON.stringify(metadata.slashCommands || [])
+      JSON.stringify(metadata.slashCommands || []),
+      JSON.stringify(metadata.skillCalls || [])
     );
   }
 
@@ -636,6 +644,7 @@ class SessionDB {
       totalOutputTokens: row.total_output_tokens || 0,
       toolNames: JSON.parse(row.tool_names || "{}"),
       slashCommands: JSON.parse(row.slash_commands || "[]"),
+      skillCalls: JSON.parse(row.skill_calls || "[]"),
       firstMessage: row.first_message || "",
       filePath: row.file_path || "",
     };

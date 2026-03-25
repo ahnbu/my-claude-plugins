@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-25 | feat | - | `my-session-dashboard` slash_commands 추적 확장 + skill_calls 신설 — Codex `$skill`·Gemini·Antigravity `/skill` 추출, Claude Skill tool_use를 skill_calls에 저장, SESSION-DB.md 갱신 |
 | 2026-03-25 | feat | - | `my-session-wrap` continue 경로 B: DB 일괄 조회·display 1줄 포맷·AskUserQuestion 제거 — 속도 20s→12s |
 | 2026-03-25 | docs | - | `_docs` continue 스킬 경로 B 검증 및 개선 문서 추가 |
 | 2026-03-25 | docs | - | `_docs` wrap 스킬 YAML전환 설계 문서 — /wrap E2E 검증 완료 및 pre-commit hook 버그 수정 내역 추가 |
