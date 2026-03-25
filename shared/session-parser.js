@@ -408,6 +408,23 @@ function buildCodexSkillWhitelist() {
   );
 }
 
+// ── 통합 스킬 화이트리스트 로드 ──
+// skills-registry.json의 names 배열 → Set. 미존재 시 buildCodexSkillWhitelist() fallback.
+function loadSkillWhitelist() {
+  const registryPath = path.join(
+    os.homedir(), ".claude", "skills", "skills-registry.json"
+  );
+  try {
+    if (fs.existsSync(registryPath)) {
+      const reg = JSON.parse(fs.readFileSync(registryPath, "utf-8"));
+      if (Array.isArray(reg.names) && reg.names.length > 0) {
+        return new Set(reg.names);
+      }
+    }
+  } catch {}
+  return buildCodexSkillWhitelist();
+}
+
 // ── Codex 세션 파싱 ──
 function processCodexSession(filePath) {
   const entries = parseJSONL(filePath);
@@ -436,7 +453,7 @@ function processCodexSession(filePath) {
 
   const messages = [];
   const slashCommands = [];
-  const codexSkillWhitelist = buildCodexSkillWhitelist();
+  const codexSkillWhitelist = loadSkillWhitelist();
   let totalInputTokens = 0;
   let totalOutputTokens = 0;
   let lastTokenEntry = null;

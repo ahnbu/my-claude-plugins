@@ -11,6 +11,17 @@
         ]
       }
     ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/resolve-context-warning.js\"",
+            "timeout": 3000
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "hooks": [
@@ -22,6 +33,16 @@
         ]
       }
     ],
-    "SessionStart": []
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"C:/Users/ahnbu/.claude/skills/scripts/build-skills-registry.mjs\"",
+            "timeout": 5000
+          }
+        ]
+      }
+    ]
   }
 }
