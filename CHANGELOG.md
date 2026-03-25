@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-25 | docs | - | 20260325_04 2차 작업내역 추가 (Codex 화이트리스트), 20260325_02 삭제 |
 | 2026-03-25 | chore | - | handoff 파일 YAML 일괄 변환 완료 — BQ→YAML 160건, YAML 정규화 81건 (총 241건 자동 처리) |
 | 2026-03-25 | feat | - | changelog-add-row.mjs 추가 + Codex 스킬 화이트리스트 필터 (extractCodexSkills whitelist 파라미터) |
 | 2026-03-25 | feat | - | migrate-handoff-to-yaml YAML 정규화 기능 추가 — date→created 변환, 불필요 키 제거, FM_KEYS/REMOVE_KEYS 상수화 |
