@@ -1,7 +1,13 @@
-# Handoff — handoff 생산-소비 사이클 자동화 (세션 03)
-> 날짜: 2026-02-26
-> 세션 ID: 22d2c5a2-4ae6-42a9-b758-d77ee2d390d6
-> 상태: 세션완료
+---
+title: handoff 생산-소비 사이클 자동화
+created:
+tags:
+session_id: 22d2c5a2-4ae6-42a9-b758-d77ee2d390d6
+session_path:
+plan:
+---
+
+# handoff 생산-소비 사이클 자동화 (세션 03)
 
 ---
 

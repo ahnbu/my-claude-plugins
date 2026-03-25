@@ -1,7 +1,13 @@
-# 세션 wrap doc-updater 검토 기록
+---
+title:
+created:
+tags:
+session_id:
+session_path:
+plan:
+---
 
-> 날짜: 2026-02-25
-> 상태: 1단계 완료 (changelog) → 2단계 보류 (문서 철학 정립)
+# 
 
 ## 1. 배경
 

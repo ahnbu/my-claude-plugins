@@ -1,8 +1,13 @@
-# Handoff — npm 설치 후 경고 진단 및 installMethod 수정 (세션 01)
-> 날짜: 2026-03-10
-> 세션 ID: 56e8e962-0b69-4a3c-9719-bb84cc3456ff
-> 세션 경로: C:/Users/ahnbu/.claude/projects/C--Users-ahnbu--claude-my-claude-plugins-my-session-dashboard/56e8e962-0b69-4a3c-9719-bb84cc3456ff.jsonl
-> 상태: 세션완료
+---
+title: npm 설치 후 경고 진단 및 installMethod 수정
+created:
+tags:
+session_id: 56e8e962-0b69-4a3c-9719-bb84cc3456ff
+session_path: "C:/Users/ahnbu/.claude/projects/C--Users-ahnbu--claude-my-claude-plugins-my-session-dashboard/56e8e962-0b69-4a3c-9719-bb84cc3456ff.jsonl"
+plan:
+---
+
+# npm 설치 후 경고 진단 및 installMethod 수정 (세션 01)
 
 ---
 

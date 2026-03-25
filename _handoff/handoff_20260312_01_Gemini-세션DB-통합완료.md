@@ -1,9 +1,13 @@
-# Handoff — Gemini CLI 세션 DB 통합 완료
+---
+title: Gemini CLI 세션 DB 통합 완료
+created:
+tags:
+session_id: 51b97014-1664-4e8a-a595-a4084003ca14
+session_path: "C:/Users/ahnbu/.claude/projects/C--Users-ahnbu--claude-my-claude-plugins/51b97014-1664-4e8a-a595-a4084003ca14.jsonl"
+plan:
+---
 
-> 날짜: 2026-03-12
-> 세션 ID: 51b97014-1664-4e8a-a595-a4084003ca14
-> 세션 경로: C:/Users/ahnbu/.claude/projects/C--Users-ahnbu--claude-my-claude-plugins/51b97014-1664-4e8a-a595-a4084003ca14.jsonl
-> 레포: C:/Users/ahnbu/.claude/my-claude-plugins
+# Gemini CLI 세션 DB 통합 완료
 
 ---
 

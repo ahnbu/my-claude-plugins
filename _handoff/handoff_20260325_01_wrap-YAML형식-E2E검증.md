@@ -1,12 +1,10 @@
 ---
 title: wrap YAML형식 E2E검증
-date: 2026-03-25
+created: 2026-03-25
+tags:
 session_id: f97cfda3-9481-42df-8c20-27fa718c957f
-session_path: C:/Users/ahnbu/.claude/projects/C--Users-ahnbu--claude-my-claude-plugins--docs/f97cfda3-9481-42df-8c20-27fa718c957f.jsonl
-tokens_in: 144K
-tokens_out: ~1K
-tools: Read
-status: completed
+session_path: "C:/Users/ahnbu/.claude/projects/C--Users-ahnbu--claude-my-claude-plugins--docs/f97cfda3-9481-42df-8c20-27fa718c957f.jsonl"
+plan:
 ---
 
 # wrap YAML형식 E2E검증 (세션 01)

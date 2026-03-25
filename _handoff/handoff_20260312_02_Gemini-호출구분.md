@@ -1,8 +1,13 @@
-# Handoff — Gemini 호출구분 (세션 02)
-> 날짜: 2026-03-12
-> 세션 ID: 019ce003-5ade-7120-8c72-9bb79bf874cc
-> 세션 경로: C:/Users/ahnbu/.codex/sessions/2026/03/12/rollout-2026-03-12T12-07-22-019ce003-5ade-7120-8c72-9bb79bf874cc.jsonl
-> 상태: 진행중
+---
+title: Gemini 호출구분
+created:
+tags:
+session_id: 019ce003-5ade-7120-8c72-9bb79bf874cc
+session_path: "C:/Users/ahnbu/.codex/sessions/2026/03/12/rollout-2026-03-12T12-07-22-019ce003-5ade-7120-8c72-9bb79bf874cc.jsonl"
+plan:
+---
+
+# Gemini 호출구분 (세션 02)
 
 ---
 

@@ -1,7 +1,13 @@
-# Handoff — 플러그인 수동 설치 & EEXIST 대처 문서화
-> 날짜: 2026-02-26
-> 세션 ID: c6ea7dee-cf5d-448c-9788-150846eefe35
-> 상태: 세션완료
+---
+title: "플러그인 수동 설치 & EEXIST 대처 문서화"
+created:
+tags:
+session_id: c6ea7dee-cf5d-448c-9788-150846eefe35
+session_path:
+plan:
+---
+
+# 플러그인 수동 설치 & EEXIST 대처 문서화
 
 ---
 

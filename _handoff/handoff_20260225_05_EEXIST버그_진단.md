@@ -1,11 +1,13 @@
-# 진단: Claude Code Plugin EEXIST 버그
+---
+title:
+created:
+tags:
+session_id:
+session_path:
+plan:
+---
 
-> 날짜: 2026-02-25 (최종 업데이트: 2026-02-25)
-> Claude Code 버전: v2.1.53 → v2.1.55 (버전 업데이트 후에도 동일 증상)
-> 설치 방식: Standalone binary (`C:\Users\ahnbu\.local\bin\claude.exe`, npm 아님)
-> 환경: Windows (MSYS_NT-10.0-26200), MSYS2 bash
-> **Bash EINVAL 이슈**: ✅ 해결 (`CLAUDE_CODE_GIT_BASH_PATH` 환경변수 설정)
-> **EEXIST 이슈**: 🔲 미해결 (GitHub [#27791 코멘트](https://github.com/anthropics/claude-code/issues/27791#issuecomment-3956538753)로 보고 완료)
+# 
 
 ---
 

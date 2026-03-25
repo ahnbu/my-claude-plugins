@@ -1,7 +1,13 @@
-# Handoff — 세션 통합 DB (SQLite) 4Phase 완료 (세션 02)
-> 날짜: 2026-03-09
-> 세션 ID: 86f8cb6f-4977-4f78-a879-9dc77aaca8f2
-> 상태: 세션완료
+---
+title: 세션 통합 DB (SQLite) 4Phase 완료
+created:
+tags:
+session_id: 86f8cb6f-4977-4f78-a879-9dc77aaca8f2
+session_path:
+plan:
+---
+
+# 세션 통합 DB (SQLite) 4Phase 완료 (세션 02)
 
 ---
 

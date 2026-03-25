@@ -1,7 +1,13 @@
-# Handoff — dashboard 출력경로 + handoff 파일명 변경
-> 날짜: 2026-02-25
-> 세션 ID: (획득 실패)
-> 상태: 세션완료
+---
+title: dashboard 출력경로 + handoff 파일명 변경
+created:
+tags:
+session_id: (획득 실패)
+session_path:
+plan:
+---
+
+# dashboard 출력경로 + handoff 파일명 변경
 
 ---
 

@@ -1,7 +1,13 @@
-# Handoff — EEXIST GitHub 보고 및 플러그인 진단
-> 날짜: 2026-02-25
-> 세션 ID: (획득 실패)
-> 상태: 세션완료
+---
+title: EEXIST GitHub 보고 및 플러그인 진단
+created:
+tags:
+session_id: (획득 실패)
+session_path:
+plan:
+---
+
+# EEXIST GitHub 보고 및 플러그인 진단
 
 ---
 

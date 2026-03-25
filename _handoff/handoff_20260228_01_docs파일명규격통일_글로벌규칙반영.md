@@ -1,7 +1,13 @@
-# Handoff — docs 파일명 규격 통일 및 글로벌 규칙 반영 (세션 01)
-> 날짜: 2026-02-28
-> 세션 ID: c5fe4eea-0f10-4f91-aaa4-44dcca016984
-> 상태: 세션완료
+---
+title: docs 파일명 규격 통일 및 글로벌 규칙 반영
+created:
+tags:
+session_id: c5fe4eea-0f10-4f91-aaa4-44dcca016984
+session_path:
+plan:
+---
+
+# docs 파일명 규격 통일 및 글로벌 규칙 반영 (세션 01)
 
 ---
 

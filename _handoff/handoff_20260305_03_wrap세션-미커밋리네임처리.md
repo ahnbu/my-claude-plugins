@@ -1,7 +1,13 @@
-# Handoff — wrap 세션: 미커밋 파일명 리네임 처리
-> 날짜: 2026-03-05
-> 세션 ID: 7de16072-21d0-4c28-a2f9-f60a3c20d9b3
-> 상태: 세션완료
+---
+title: "wrap 세션: 미커밋 파일명 리네임 처리"
+created:
+tags:
+session_id: 7de16072-21d0-4c28-a2f9-f60a3c20d9b3
+session_path:
+plan:
+---
+
+# wrap 세션: 미커밋 파일명 리네임 처리
 
 ---
 

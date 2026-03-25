@@ -1,7 +1,13 @@
-# Handoff — /wrap 스킬 next-handoff.sh 상대경로 버그 수정 (세션 06)
-> 날짜: 2026-02-26
-> 세션 ID: 80b79c70-8cb6-4192-93f1-a211cad947bc
-> 상태: 세션완료
+---
+title: /wrap 스킬 next-handoff.sh 상대경로 버그 수정
+created:
+tags:
+session_id: 80b79c70-8cb6-4192-93f1-a211cad947bc
+session_path:
+plan:
+---
+
+# /wrap 스킬 next-handoff.sh 상대경로 버그 수정 (세션 06)
 
 ---
 

@@ -1,7 +1,13 @@
-# Handoff — my-session-dashboard plans 폴더 통합
-> 날짜: 2026-02-25
-> 세션 ID: (획득 실패)
-> 상태: 세션완료
+---
+title: my-session-dashboard plans 폴더 통합
+created:
+tags:
+session_id: (획득 실패)
+session_path:
+plan:
+---
+
+# my-session-dashboard plans 폴더 통합
 
 ---
 

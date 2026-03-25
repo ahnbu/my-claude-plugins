@@ -1,8 +1,13 @@
-# Handoff — wrap 완료 메시지 절대경로 표시 픽스 (세션 01)
-> 날짜: 2026-03-15
-> 세션 ID: 37085788-e034-43bd-a7c6-ec3cf75ecb2c
-> 세션 경로: C:/Users/ahnbu/.claude/projects/C--Users-ahnbu--claude-my-claude-plugins/37085788-e034-43bd-a7c6-ec3cf75ecb2c.jsonl
-> 상태: 세션완료
+---
+title: wrap 완료 메시지 절대경로 표시 픽스
+created:
+tags:
+session_id: 37085788-e034-43bd-a7c6-ec3cf75ecb2c
+session_path: "C:/Users/ahnbu/.claude/projects/C--Users-ahnbu--claude-my-claude-plugins/37085788-e034-43bd-a7c6-ec3cf75ecb2c.jsonl"
+plan:
+---
+
+# wrap 완료 메시지 절대경로 표시 픽스 (세션 01)
 
 ---
 

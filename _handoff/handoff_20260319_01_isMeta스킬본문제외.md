@@ -1,12 +1,10 @@
 ---
 title: isMeta 스킬 본문 대화내역 제외
-date: 2026-03-19
+created: 2026-03-19
+tags:
 session_id: 6d7f64cf-8870-4c34-9acd-5c2971ac97dd
 session_path:
-tokens_in:
-tokens_out:
-tools:
-status:
+plan:
 ---
 
 # isMeta 스킬 본문 대화내역 제외

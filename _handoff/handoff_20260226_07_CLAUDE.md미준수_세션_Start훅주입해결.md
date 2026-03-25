@@ -1,7 +1,13 @@
-# Handoff — CLAUDE.md 미준수 문제 → SessionStart 훅 주입으로 해결 (세션 07)
-> 날짜: 2026-02-26
-> 세션 ID: adbc7042-3798-4ece-82e8-8d01e3fb890d
-> 상태: 세션완료
+---
+title: CLAUDE.md 미준수 문제 → SessionStart 훅 주입으로 해결
+created:
+tags:
+session_id: adbc7042-3798-4ece-82e8-8d01e3fb890d
+session_path:
+plan:
+---
+
+# CLAUDE.md 미준수 문제 → SessionStart 훅 주입으로 해결 (세션 07)
 
 ---
 

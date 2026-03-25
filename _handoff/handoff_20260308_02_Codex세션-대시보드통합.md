@@ -1,8 +1,13 @@
-# Handoff — Codex 세션 대시보드 통합 (세션 완료)
-> 날짜: 2026-03-08
-> 세션 ID: ab5b5d95-47f0-49cd-992b-c1f6f787e2c3
-> 세션 경로: C:/Users/ahnbu/.claude/projects/C--Users-ahnbu--claude-my-claude-plugins/ab5b5d95-47f0-49cd-992b-c1f6f787e2c3.jsonl
-> 상태: 세션완료
+---
+title: Codex 세션 대시보드 통합 (세션 완료)
+created:
+tags:
+session_id: ab5b5d95-47f0-49cd-992b-c1f6f787e2c3
+session_path: "C:/Users/ahnbu/.claude/projects/C--Users-ahnbu--claude-my-claude-plugins/ab5b5d95-47f0-49cd-992b-c1f6f787e2c3.jsonl"
+plan:
+---
+
+# Codex 세션 대시보드 통합 (세션 완료)
 
 ---
 

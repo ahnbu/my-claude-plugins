@@ -1,12 +1,10 @@
 ---
 title: wrap 스킬 handoff 형식 불일치 원인 분석
-date: 2026-03-24
+created: 2026-03-24
+tags:
 session_id: b991d4af-5030-4c29-8f99-80c84ee85694
-session_path: "C:/Users/ahnbu/.claude/projects/D--CloudSync-90-------handoff/b991d4af-5030-4c29-8f99-80c84ee85694.jsonl"
-tokens_in: 6000K
-tokens_out: 24K
-tools: "Bash(14), Read(6), Glob(4), Skill(3), Write(2), Edit(2), ToolSearch(2), Agent(1), ExitPlanMode(1)"
-status: 세션완료
+session_path: "\"C:/Users/ahnbu/.claude/projects/D--CloudSync-90-------handoff/b991d4af-5030-4c29-8f99-80c84ee85694.jsonl\""
+plan:
 ---
 
 # wrap 스킬 handoff 형식 불일치 원인 분석 (세션 01)
