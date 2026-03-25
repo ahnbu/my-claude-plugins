@@ -87,25 +87,32 @@ git -C "<REPO>" diff --cached --stat
 
 #### 2-4. CHANGELOG 업데이트
 
-해당 레포 루트에 `CHANGELOG.md`가 존재하면:
-- 이력 테이블 최상단에 새 행 추가
-- 형식: `| 날짜 | 타입 | 버전 | 변경 내용 |`
-- 버전 열: plugin.json 버전이 변경된 경우만 기재, 아니면 `-`
-- CHANGELOG 변경도 같은 커밋에 포함
+해당 레포 루트에 `CHANGELOG.md`가 존재하면 스크립트로 행을 삽입한다:
 
 ```bash
 ls "<REPO>/CHANGELOG.md" 2>/dev/null && echo "EXISTS" || echo "NOT_FOUND"
 ```
 
+EXISTS이면:
+
+```bash
+node ~/.claude/my-claude-plugins/shared/changelog-add-row.mjs \
+  --repo "<REPO>" \
+  --type <type> \
+  --scope "<scope>" \
+  --desc "<변경 내용>" \
+  [--version <semver>]
+```
+
+- `--version`: plugin.json 버전이 변경된 경우만 지정, 없으면 생략 (`-` 자동)
+- 스크립트 성공 시 stdout에 삽입된 행 출력, 실패(exit 1) 시 사용자에게 보고
+- CHANGELOG 변경도 같은 커밋에 포함
+
 #### 2-5. Commit + Push
 
 ```bash
-git -C "<REPO>" commit -m "$(cat <<'EOF'
-type(scope): 요약
-
-Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
-EOF
-)"
+COAUTHOR=$(node "$HOME/.claude/skills/session-find/scripts/detect-runtime.mjs" --coauthor)
+git -C "<REPO>" commit -m "$([ -n "$COAUTHOR" ] && printf 'type(scope): 요약\n\n%s' "$COAUTHOR" || echo 'type(scope): 요약')"
 ```
 
 커밋 후 remote 확인:
