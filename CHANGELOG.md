@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-26 | feat | - | 문서 다운로드 버튼 추가 — .md 파일 직접 저장 (일반/상세 구분, _detail 접미어) |
 | 2026-03-25 | docs | - | 스킬 레지스트리 JSON 중앙화 구현 기록 — build-skills-registry.mjs 설계, skill-doctor/session-parser 전환, SessionStart hook 의사결정 근거 포함 |
 | 2026-03-25 | feat | - | session-parser.js loadSkillWhitelist() 추가 — skills-registry.json names→Set, 미존재 시 buildCodexSkillWhitelist() fallback; my-session-wrap SessionStart hook에 build-skills-registry.mjs 실행 추가 |
 | 2026-03-25 | docs | - | 20260325_04 2차 작업내역 추가 (Codex 화이트리스트), 20260325_02 삭제 |

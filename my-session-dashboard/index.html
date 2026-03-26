@@ -834,6 +834,22 @@
   .copy-doc-btn:hover { background: #1f6feb44; border-color: var(--accent); }
   .copy-doc-btn.copied { background: #3fb95022; border-color: var(--success); color: var(--success); }
 
+  .download-doc-btn {
+    flex-shrink: 0;
+    background: #1f6feb22;
+    border: 1px solid var(--accent-dim);
+    border-radius: 5px;
+    color: var(--accent);
+    font-size: 12px;
+    padding: 3px 7px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    vertical-align: middle;
+    line-height: 1;
+  }
+  .download-doc-btn:hover { background: #1f6feb44; border-color: var(--accent); }
+  .download-doc-btn.copied { background: #3fb95022; border-color: var(--success); color: var(--success); }
+
   /* 타임라인 모달 */
   .timeline-modal-overlay {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -1328,7 +1344,7 @@
     const sessionFilePath = meta.filePath || "";
     let html = `
       <div class="detail-header">
-        <h2>${escapeHtml(meta.title)} <button class="copy-doc-btn" onclick="copyDoc(this, '${escapeAttr(meta.sessionId)}', false)">문서 복사</button> <button class="copy-doc-btn" onclick="copyDoc(this, '${escapeAttr(meta.sessionId)}', true)">문서 복사 (상세)</button>${meta.type !== "plan" ? ` <button class="copy-doc-btn" onclick="showTimeline('${escapeAttr(meta.sessionId)}')">타임라인</button>` : ""}</h2>
+        <h2>${escapeHtml(meta.title)} <button class="copy-doc-btn" onclick="copyDoc(this, '${escapeAttr(meta.sessionId)}', false)">문서 복사</button><button class="download-doc-btn" onclick="downloadDoc(this, '${escapeAttr(meta.sessionId)}', false)" title="문서 다운로드 (.md)"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button> <button class="copy-doc-btn" onclick="copyDoc(this, '${escapeAttr(meta.sessionId)}', true)">문서 복사 (상세)</button><button class="download-doc-btn" onclick="downloadDoc(this, '${escapeAttr(meta.sessionId)}', true)" title="상세 문서 다운로드 (.md)"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>${meta.type !== "plan" ? ` <button class="copy-doc-btn" onclick="showTimeline('${escapeAttr(meta.sessionId)}')">타임라인</button>` : ""}</h2>
         <div class="detail-meta">
           <span><span class="label">프로젝트:</span> ${escapeHtml(meta.projectDisplay || "-")}</span>
           <span><span class="label">브랜치:</span> ${escapeHtml(meta.gitBranch || "-")}</span>
@@ -1488,7 +1504,8 @@
       : '<span class="type-badge plan">PLAN</span>';
 
     const planFilePath = meta.filePath || "";
-    const docCopyBtn = `<button class="copy-doc-btn" onclick="copyDoc(this, '${escapeAttr(meta.sessionId)}', false)">문서 복사</button> <button class="copy-doc-btn" onclick="copyDoc(this, '${escapeAttr(meta.sessionId)}', true)">문서 복사 (상세)</button>`;
+    const dlIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`;
+    const docCopyBtn = `<button class="copy-doc-btn" onclick="copyDoc(this, '${escapeAttr(meta.sessionId)}', false)">문서 복사</button><button class="download-doc-btn" onclick="downloadDoc(this, '${escapeAttr(meta.sessionId)}', false)" title="문서 다운로드 (.md)">${dlIcon}</button> <button class="copy-doc-btn" onclick="copyDoc(this, '${escapeAttr(meta.sessionId)}', true)">문서 복사 (상세)</button><button class="download-doc-btn" onclick="downloadDoc(this, '${escapeAttr(meta.sessionId)}', true)" title="상세 문서 다운로드 (.md)">${dlIcon}</button>`;
     let html = `
       <div class="detail-header">
         <h2><span>${escapeHtml(meta.title)}</span> ${badge} ${docCopyBtn}</h2>
@@ -1845,11 +1862,10 @@
       .join("\n\n---\n\n");
   }
 
-  window.copyDoc = function(btn, sessionId, detailed) {
+  function buildDocText(sessionId, detailed) {
     detailed = detailed === true;
     const content = loadConversation(sessionId);
     const meta = currentMeta || {};
-    const originalText = btn.textContent;
     let text;
 
     // 메타 헤더 생성 (Plan / 세션 공통)
@@ -1890,12 +1906,34 @@
     } else {
       text = JSON.stringify(content, null, 2);
     }
+    return { text, meta };
+  }
+
+  window.copyDoc = function(btn, sessionId, detailed) {
+    const { text } = buildDocText(sessionId, detailed);
+    const originalText = btn.textContent;
     copyToClipboard(text).then(() => {
       btn.textContent = "✓ 복사됨";
       btn.classList.add("copied");
       showCopyToast("문서 복사됨");
       setTimeout(() => { btn.textContent = originalText; btn.classList.remove("copied"); }, 1800);
     });
+  };
+
+  window.downloadDoc = function(btn, sessionId, detailed) {
+    const { text, meta } = buildDocText(sessionId, detailed);
+    const blob = new Blob([text], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const suffix = detailed ? "_detail" : "";
+    const filename = (meta.title || sessionId).replace(/[<>:"/\\|?*]/g, "_") + suffix + ".md";
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    btn.classList.add("copied");
+    showCopyToast("문서 다운로드됨");
+    setTimeout(() => btn.classList.remove("copied"), 1800);
   };
 
   // ── Search ──
