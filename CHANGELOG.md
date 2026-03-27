@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-27 | feat | - | query-sessions.js doc 커맨드 추가 (on-demand sync·마크다운 출력), SESSION-DB.md §9 사용 가이드 신설 |
 | 2026-03-26 | feat | - | 문서 다운로드 버튼 추가 — .md 파일 직접 저장 (일반/상세 구분, _detail 접미어) |
 | 2026-03-25 | docs | - | 스킬 레지스트리 JSON 중앙화 구현 기록 — build-skills-registry.mjs 설계, skill-doctor/session-parser 전환, SessionStart hook 의사결정 근거 포함 |
 | 2026-03-25 | feat | - | session-parser.js loadSkillWhitelist() 추가 — skills-registry.json names→Set, 미존재 시 buildCodexSkillWhitelist() fallback; my-session-wrap SessionStart hook에 build-skills-registry.mjs 실행 추가 |

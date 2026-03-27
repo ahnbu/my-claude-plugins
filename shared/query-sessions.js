@@ -8,6 +8,13 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { DatabaseSync } = require("node:sqlite");
 
+const {
+  processSession,
+  processCodexSession,
+  processGeminiSession,
+  processAntigravitySession,
+} = require("./session-parser.js");
+
 // DB 경로 해결: marketplace(정본) → my-claude-plugins(폴백)
 function resolveDbPath() {
   const candidates = [
@@ -31,13 +38,16 @@ Commands:
   recent [N]           최근 N개 세션 (기본 10)
   by-tool <tool>       특정 도구/스킬 사용 세션
   by-project <name>    특정 프로젝트 세션
+  doc <session_id>     세션 대화 내용 마크다운 출력
 
 Options:
-  --scope <claude|codex|plan|gemini|antigravity>  타입 필터 (기본: all)
-  --limit <N>                  결과 수 제한 (기본: 10)
+  --scope <claude|codex|plan|gemini|antigravity>  AI 소스 필터 (기본: 전체)
+  --limit <N>                  반환 세션 수 제한 (기본: 10) / doc: 출력 메시지 수 제한 (기본: 전체)
+  --detailed                   doc 전용: tool input JSON 포함
+  --no-sync                    doc 전용: DB 갱신 생략 (완료 세션에서만 안전, ~0.7s 절감)
   --help                       이 도움말 표시
 
-Output: JSON array to stdout. Error/usage to stderr.
+Output: JSON array to stdout (search/get/recent/by-tool/by-project). Markdown to stdout (doc). Error/usage to stderr.
 
 Examples:
   node query-sessions.js search "doc-save" --scope claude --limit 5
@@ -45,12 +55,14 @@ Examples:
   node query-sessions.js get abc123
   node query-sessions.js by-tool "session-find"
   node query-sessions.js by-project "global-rule-improve"
+  node query-sessions.js doc abc123
+  node query-sessions.js doc abc123 --limit 20
 `);
 }
 
 function parseArgs(argv) {
   const args = argv.slice(2);
-  const opts = { command: null, positional: [], scope: null, limit: 10 };
+  const opts = { command: null, positional: [], scope: null, limit: 10, limitExplicit: false, detailed: false, noSync: false };
 
   let i = 0;
   while (i < args.length) {
@@ -62,6 +74,11 @@ function parseArgs(argv) {
       opts.scope = args[++i];
     } else if (a === "--limit" && args[i + 1]) {
       opts.limit = parseInt(args[++i], 10) || 10;
+      opts.limitExplicit = true;
+    } else if (a === "--detailed") {
+      opts.detailed = true;
+    } else if (a === "--no-sync") {
+      opts.noSync = true;
     } else if (!opts.command) {
       opts.command = a;
     } else {
@@ -139,6 +156,147 @@ function cmdByTool(db, tool, opts) {
     LIMIT ?
   `).all(like, opts.limit);
   return rows.map(rowToResult);
+}
+
+// ── doc 커맨드 헬퍼 ──
+
+function syncSingleMessages(db, sessionId, filePath, sessionType) {
+  let result = null;
+  try {
+    if (!filePath || !fs.existsSync(filePath)) return false;
+    if (sessionType === "session") {
+      result = processSession(filePath);
+    } else if (sessionType === "codex") {
+      result = processCodexSession(filePath);
+    } else if (sessionType === "gemini") {
+      // projectRoot: chats의 상위 디렉토리
+      const projectRoot = path.dirname(path.dirname(filePath));
+      result = processGeminiSession(filePath, projectRoot);
+    } else {
+      // plan, antigravity: on-demand sync 미지원, DB 캐시 사용
+      return false;
+    }
+  } catch (err) {
+    process.stderr.write(`Warning: messages sync 실패 (${sessionType}) — ${err.message}\n`);
+    return false;
+  }
+  if (!result) return false;
+
+  db.prepare("DELETE FROM messages WHERE session_id = ?").run(sessionId);
+  const stmt = db.prepare(
+    "INSERT INTO messages (session_id, seq, role, subtype, text, timestamp, tools) VALUES (?, ?, ?, ?, ?, ?, ?)"
+  );
+  for (let i = 0; i < result.messages.length; i++) {
+    const msg = result.messages[i];
+    stmt.run(
+      sessionId, i, msg.role,
+      msg.subtype || null,
+      msg.text || null,
+      msg.timestamp || null,
+      msg.tools ? JSON.stringify(msg.tools) : null
+    );
+  }
+  return true;
+}
+
+function formatTokensShort(n) {
+  if (!n) return "0";
+  if (n >= 1000000) return `${Math.round(n / 100000) / 10}M`;
+  if (n >= 1000) return `${Math.round(n / 100) / 10}K`;
+  return String(n);
+}
+
+function messagesToMarkdown(metaRow, messages, detailed) {
+  const lines = [];
+  const title = metaRow.title || metaRow.session_id;
+  const project = metaRow.project || "—";
+  const totalTokens = (metaRow.total_input_tokens || 0) + (metaRow.total_output_tokens || 0);
+
+  // 소요 시간 계산
+  let durationStr = "";
+  if (metaRow.timestamp && metaRow.last_timestamp) {
+    const diffMs = new Date(metaRow.last_timestamp) - new Date(metaRow.timestamp);
+    if (diffMs > 0) {
+      const diffMin = Math.round(diffMs / 60000);
+      durationStr = diffMin >= 60
+        ? `${(diffMin / 60).toFixed(1)}h`
+        : `${diffMin}min`;
+    }
+  }
+
+  lines.push(`# ${title}`);
+  lines.push("");
+  lines.push(`- **프로젝트:** ${project}`);
+  if (durationStr) lines.push(`- **소요시간:** ${durationStr}`);
+  lines.push(`- **토큰:** ${formatTokensShort(totalTokens)}`);
+  lines.push("");
+  lines.push("---");
+  lines.push("");
+
+  for (const msg of messages) {
+    if (msg.role === "user") {
+      if (msg.subtype === "tool_result") continue;
+      lines.push("## User");
+      lines.push("");
+      if (msg.text) lines.push(msg.text.trimEnd());
+    } else if (msg.role === "assistant") {
+      lines.push("## Assistant");
+      lines.push("");
+      if (msg.text) lines.push(msg.text.trimEnd());
+      if (msg.tools && msg.tools.length > 0) {
+        lines.push("");
+        for (const tool of msg.tools) {
+          if (detailed && tool.input) {
+            const inputStr = JSON.stringify(tool.input);
+            const truncated = inputStr.length > 300 ? inputStr.slice(0, 300) + "…" : inputStr;
+            lines.push(`> 🔧 **${tool.name}**: \`${truncated}\``);
+          } else {
+            lines.push(`> 🔧 ${tool.name}`);
+          }
+        }
+      }
+    }
+    lines.push("");
+    lines.push("---");
+    lines.push("");
+  }
+
+  return lines.join("\n");
+}
+
+function cmdDoc(db, sessionId, opts) {
+  const row = db.prepare("SELECT * FROM sessions WHERE session_id = ?").get(sessionId);
+  if (!row) return null;
+
+  // on-demand messages sync
+  if (!opts.noSync && row.file_path) {
+    syncSingleMessages(db, sessionId, row.file_path, row.type);
+  }
+
+  // messages 조회
+  const useLimit = opts.limitExplicit ? opts.limit : 0;
+  let msgRows;
+  if (useLimit > 0) {
+    msgRows = db.prepare(
+      "SELECT role, subtype, text, timestamp, tools FROM messages WHERE session_id = ? ORDER BY seq DESC LIMIT ?"
+    ).all(sessionId, useLimit);
+    msgRows.reverse();
+  } else {
+    msgRows = db.prepare(
+      "SELECT role, subtype, text, timestamp, tools FROM messages WHERE session_id = ? ORDER BY seq"
+    ).all(sessionId);
+  }
+
+  const messages = msgRows.map(r => {
+    const m = { role: r.role };
+    if (r.subtype) m.subtype = r.subtype;
+    if (r.text) m.text = r.text;
+    if (r.timestamp) m.timestamp = r.timestamp;
+    if (r.tools) m.tools = JSON.parse(r.tools);
+    return m;
+  });
+
+  return messagesToMarkdown(row, messages, opts.detailed);
 }
 
 function cmdByProject(db, projectName, opts) {
@@ -225,6 +383,20 @@ function main() {
         }
         result = cmdByProject(db, projectName, opts);
         break;
+      }
+      case "doc": {
+        const sessionId = opts.positional[0];
+        if (!sessionId) {
+          process.stderr.write("Error: doc <session_id> — session_id를 지정하세요.\n");
+          process.exit(1);
+        }
+        const markdown = cmdDoc(db, sessionId, opts);
+        if (markdown === null) {
+          process.stderr.write(`Error: 세션을 찾을 수 없습니다 — ${sessionId}\n`);
+          process.exit(1);
+        }
+        process.stdout.write(markdown + "\n");
+        return;
       }
       default:
         process.stderr.write(`Error: 알 수 없는 커맨드 "${opts.command}"\n`);

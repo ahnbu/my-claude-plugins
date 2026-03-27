@@ -263,15 +263,18 @@ node shared/query-sessions.js <command> [args] [options]
 | `recent` | `[N]` | 최근 N개 세션 (기본 10) |
 | `by-tool` | `<tool>` | 특정 도구 사용 세션 (tool_names LIKE) |
 | `by-project` | `<name>` | 특정 프로젝트 세션 (project LIKE) |
+| `doc` | `<session_id>` | 세션 대화 내용 마크다운 출력 (on-demand messages sync 포함) |
 
 ### 옵션
 
 | 옵션 | 값 | 설명 |
 |------|-----|------|
 | `--scope` | `claude` \| `codex` \| `plan` \| `gemini` \| `antigravity` | 타입 필터 (기본: all) |
-| `--limit` | N | 결과 수 제한 (기본 10) |
+| `--limit` | N | 결과 수 제한 (기본 10) / `doc`: 최근 N개 메시지 (기본: 전체) |
+| `--detailed` | — | `doc` 전용: tool input JSON 포함 |
+| `--no-sync` | — | `doc` 전용: messages on-demand sync 생략 |
 
-**출력**: JSON → stdout / 에러·사용법 → stderr
+**출력**: JSON → stdout (`search`/`get`/`recent`/`by-tool`/`by-project`) / 마크다운 → stdout (`doc`) / 에러·사용법 → stderr
 
 ### DB 경로 해결 순서
 
@@ -293,6 +296,8 @@ node shared/query-sessions.js recent 5 --scope antigravity
 node shared/query-sessions.js get abc123de-e367-...
 node shared/query-sessions.js by-tool "session-find"
 node shared/query-sessions.js by-project "my-claude-plugins"
+node shared/query-sessions.js doc abc123de-e367-...
+node shared/query-sessions.js doc abc123de-e367-... --detailed
 ```
 
 ---
@@ -363,4 +368,67 @@ node shared/query-sessions.js by-project "my-claude-plugins"
 | 2026-03-12 | 동기화 | `_syncGeminiDir()` — 자동 호출 세션 필터 확장: (claude) 태그도 감지 대상에 추가 (`(codex\|claude)` 정규식 통합) | — |
 | 2026-03-12 | 동기화 | `_syncGeminiDir()` — Codex 자동 호출 세션 제외 필터 추가: (codex) 태그 감지 + 60초 미만 지속시간 스킵 | — |
 | 2026-03-12 | 스키마·파일 맵·CLI·동기화 | Gemini 세션 통합 (파서·DB·쿼리·빌드), `idx_sessions_file_path` 추가 | — |
+| 2026-03-27 | CLI | `query-sessions.js` `doc` 커맨드 추가 — 세션 대화 내용 마크다운 출력. `--detailed` (tool input JSON 포함), `--no-sync` (sync 생략), `--limit N` (최근 N개 메시지) 옵션. on-demand messages sync (`syncSingleMessages`) 내장 — Claude/Codex/Gemini 지원, Antigravity/Plan은 DB 캐시 사용 | — |
+| 2026-03-27 | 설명 | §9 사용 가이드 추가 — CLI 조회 전략, messages vs events 선택 기준, 알려진 한계 | — |
+| 2026-03-25 | 파일 맵 | `session-parser.js` `loadSkillWhitelist()` 추가 — `~/.claude/skills/skills-registry.json` `names` 배열을 Set으로 로드. 레지스트리 미존재 시 `buildCodexSkillWhitelist()` fallback. `processCodexSession()` 화이트리스트 소스를 단일 레지스트리 기반으로 전환 | — |
+| 2026-03-25 | 파일 맵 | `shared/text-utils.js` `extractCodexSkills()` — `whitelist` 파라미터 추가 (Set). `session-parser.js` `processCodexSession()` — `buildCodexSkillWhitelist()`로 `~/.codex/skills/` 스캔, 화이트리스트 교차 필터 적용하여 노이즈 제거 | — |
+| 2026-03-25 | 스키마·파일 맵 | sessions 테이블에 `skill_calls TEXT` 컬럼 추가 — Claude Skill tool_use(AI proactive 포함)를 JSON 배열로 저장. `slash_commands` 추출을 Codex(`$skill`)/Gemini(`/skill`)/Antigravity(`/skill`) 세션으로 확장. `extractCodexSkills()`·`extractSlashSkills()` text-utils.js에 추가, session-parser.js 4개 파서에 반영 | — |
+| 2026-03-24 | 파일 맵 | `session-parser.js` — 슬래시 커맨드 전용 메시지 텍스트 복원: `cleanText` 빈 문자열 시 `cmds` 폴백으로 대화 뷰에 `/wrap` 등 표시 | — |
+| 2026-03-24 | 스키마 | sessions 테이블에 `slash_commands TEXT` 컬럼 추가 — `<command-name>` 태그에서 슬래시 커맨드 목록 추출하여 JSON 배열로 저장. `extractSlashCommands()` text-utils.js에 추가, session-parser.js processSession()에 집계 로직 반영 | — |
+| 2026-03-23 | 스키마 | sessions 테이블에 `error_count` 컬럼 추가 (is_error=true인 tool_result 카운트). 기존 DB 마이그레이션 포함 (ALTER TABLE + mtime=0 강제 재동기화) | — |
+| 2026-03-20 | 설명 | §1 개요에 데이터 계층 비교표 2개 추가 (JSONL→DB 계층별 용도·크기, messages vs events 세부 구성) | — |
+| 2026-03-20 | 동기화 | `_syncGeminiDir()` — 동일 UUID 중복 파일 sentinel 처리: `_upsertSession` 전 기존 session_id 확인, 중복 시 `gemini_excluded` sentinel로 저장하여 매빌드 "NEW" 반복 방지 | — |
+| 2026-03-20 | 동기화 | `_syncGeminiDir()` — 필터 세션 sentinel 캐시: `type='gemini_excluded'`로 DB 기록하여 재파싱 방지, 디버그 로그 추가. `getAllMeta()` — `gemini_excluded` 제외 필터 | — |
+| 2026-03-20 | 스키마·파일 맵·CLI·동기화 | Antigravity 세션 통합: `processAntigravitySession()`·`normalizeAntigravityEntries()` 파서 추가, `syncAntigravity()` 독립 메서드, `_syncAntigravityFile()` 증분 동기화, `syncSingleSession()` Antigravity 분기, `--scope antigravity` CLI 필터. `includeAntigravity` 기본 `false` (명시적 호출만) | — |
+| 2026-03-19 | 파일 맵 | `session-parser.js` — `isMeta` 엔트리 messages 제외: Skill 본문 주입 메시지 필터링 | — |
+| 2026-03-19 | CLI | `query-sessions.js` — `get` 명령에 `session` alias 추가, 사용법 표시 업데이트 | — |
+| 2026-03-12 | 동기화 | `_syncGeminiDir()` — 자동 호출 세션 필터 확장: (claude) 태그도 감지 대상에 추가 (`(codex\|claude)` 정규식 통합) | — |
+| 2026-03-12 | 동기화 | `_syncGeminiDir()` — Codex 자동 호출 세션 제외 필터 추가: (codex) 태그 감지 + 60초 미만 지속시간 스킵 | — |
+| 2026-03-12 | 스키마·파일 맵·CLI·동기화 | Gemini 세션 통합 (파서·DB·쿼리·빌드), `idx_sessions_file_path` 추가 | — |
 | 2026-03-12 | — | 최초 작성 | `898637f` |
+
+---
+
+## 9. 사용 가이드
+
+### CLI 조회 전략
+
+세션 작업 내역이 필요할 때:
+
+| 단계 | 커맨드 | 용도 |
+|------|--------|------|
+| 1 | `query-sessions.js get <id>` | 메타데이터 (제목, 프로젝트, 도구, 토큰) |
+| 2 | `query-sessions.js doc <id>` | 대화 내용 (user + assistant + 도구 요약) |
+| 3 | JSONL 직접 조회 | 최후 수단 (thinking, tool_result raw 필요 시만) |
+
+```bash
+# 메타데이터만 확인
+node shared/query-sessions.js get abc123
+
+# 대화 내용 마크다운 출력
+node shared/query-sessions.js doc abc123
+
+# tool input JSON 포함 (상세 버전)
+node shared/query-sessions.js doc abc123 --detailed
+
+# 최근 20개 메시지만
+node shared/query-sessions.js doc abc123 --limit 20
+
+# 이미 최신인 경우 sync 생략 (속도 우선)
+node shared/query-sessions.js doc abc123 --no-sync
+```
+
+### messages vs events 선택 기준
+
+| 용도 | 사용할 테이블 | 이유 |
+|------|-------------|------|
+| CLI 대화 조회 | messages | 4소스 전부 적재, 즉시 조회 |
+| 스킬 내부 패턴 매칭 | events | on-demand sync, tool_result 포함 |
+| 대시보드 문서 저장 | messages | buildDocText 기반 |
+
+### 알려진 한계
+
+- messages는 `sync()` (대시보드 빌드) 시 일괄 적재. 진행중 세션은 `doc` 커맨드의 on-demand sync로 보정.
+- events는 `syncSingleSession()` 호출 세션만 캐시 (~100개). 나머지는 호출 시 JSONL 파싱 필요 (~2s).
+- thinking, system-reminder는 어느 테이블에도 없음. 필요 시 JSONL만 가능.
+- `doc` on-demand sync 지원 소스: Claude, Codex, Gemini. Antigravity·Plan은 DB 캐시 사용.
