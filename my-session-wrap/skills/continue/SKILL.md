@@ -17,23 +17,25 @@ description: "최신 handoff를 읽고 이전 세션 컨텍스트를 재수립. 
 ### 경로 A: 세션 파일 기반 복원
 
 #### A-1: DB Fast-path (우선)
-1. DB 조회 (Claude 스코프 우선):
+1. DB 조회:
    ```
-   node ~/.claude/my-claude-plugins/shared/query-sessions.js get <sessionId>
+   node ~/.claude/my-claude-plugins/shared/query-sessions.js doc <sessionId> --no-sync
    ```
-   - AI 스코프 미명시 시 `--scope claude` 적용 (Claude 우선 조회)
-   - 출력 JSON: `{ session_id, title, project, file_path, keywords, first_message, ... }`
-2. DB 결과가 있으면:
-   - `file_path`로 JSONL 파일을 직접 Read (Glob 불필요)
-   - 컨텍스트 요약 출력:
-     - **세션 제목**: `title` 필드
-     - **프로젝트**: `project` 필드
-     - **키워드**: `keywords` 배열
-     - **마지막 작업**: JSONL 마지막 assistant 메시지 기준
+   - 출력: 마크다운 (헤더에 title·project 포함, 대화 내용 포함)
+2. 출력이 있으면:
+   - 컨텍스트 요약 출력 (doc 마크다운 기준):
+     - **세션 제목**: doc 헤더 title
+     - **프로젝트**: doc 헤더 project
+     - **대화 흐름**: doc 마크다운 내용
 3. DB 결과 없으면 → A-2 Glob 폴백으로 진행
 
 #### A-2: Glob 폴백
-1. `~/.claude/projects/*/{sessionId}.jsonl` Glob으로 파일 탐색
+session_id 접두어로 AI 타입 분기:
+- `codex:` 접두어 → `~/.codex/sessions/**/*-<UUID>.jsonl` Glob
+- `gemini:` 접두어 → `~/.gemini/tmp/*/chats/session-*.json` (UUID 매칭)
+- 순수 UUID → `~/.claude/projects/*/{sessionId}.jsonl` (기존)
+
+1. 위 패턴으로 Glob 탐색
 2. 파일 미발견 시 → "해당 Session ID의 세션 파일을 찾을 수 없습니다" 안내 후 경로 C로 폴백
 3. 파일 발견 시 → Grep으로 type이 "user" 또는 "assistant"인 줄만 추출 후 Read로 읽기
 4. 대화 내용에서 컨텍스트 요약 출력:
@@ -47,17 +49,21 @@ description: "최신 handoff를 읽고 이전 세션 컨텍스트를 재수립. 
 
 ### 경로 B: context-warning 기반 복원
 
-1. 스크립트 호출:
+1. 스크립트 호출 (현재 세션 ID를 인자로 전달):
    ```
-   node ~/.claude/my-claude-plugins/my-session-wrap/skills/continue/scripts/find-context-warning.mjs
+   node ~/.claude/my-claude-plugins/my-session-wrap/skills/continue/scripts/find-context-warning.mjs --session-id <현재_session_id>
    ```
-   - 출력 JSON: `{ found: boolean, session_id?, cp?, remaining?, ts? }`
+   - 현재 session_id: system-reminder의 `[session_id=XXXX]` 값
+   - 출력 JSON: `{ found: boolean, count?, sessions?: [{session_id, cp, ts, display, resolved?}] }`
+   - 부수효과: `.pending_<session_id>` 파일 생성 (PostToolUse hook이 resolved 마킹에 사용)
 2. `found: false` → 경로 C로 넘어감
 3. `found: true` → 텍스트로 목록 출력 (AskUserQuestion 사용 금지):
    ```
    컨텍스트 만료 세션 {count}개:
-   1. {sessions[0].display}
+   1. {sessions[0].display}   ← resolved이면 "(완료)" 접두어, doc-save 있으면 "→ {경로}" 표시
+      └ {sessions[0].session_id}
    2. {sessions[1].display}
+      └ {sessions[1].session_id}
    ...
    0. 건너뛰기
 
@@ -65,6 +71,8 @@ description: "최신 handoff를 읽고 이전 세션 컨텍스트를 재수립. 
    ```
 4. 사용자 입력 대기 (일반 채팅 응답)
 5. 번호 선택 시 → **경로 A** 실행 (해당 `session_id`로)
+   - PostToolUse hook이 경로 A-1의 `query-sessions.js get <session_id>` 호출을 자동 감지하여 resolved 마킹
+   - resolved_doc가 있으면 경로 A 완료 후 안내: "이전 doc-save 문서: {경로} — 이어서 업데이트합니다."
 6. 0 또는 건너뛰기 시 → 경로 C로 넘어감
 
 ### 경로 C: handoff 기반 복원 (기존)

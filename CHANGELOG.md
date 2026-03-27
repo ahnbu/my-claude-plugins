@@ -10,6 +10,8 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-27 | refactor | - | continue/history-insight/session-analyzer 스킬 JSONL 직접 조회 → 세션DB 전환 — doc --no-sync 통합, 멀티AI Glob 분기, find/stat 제거 |
+| 2026-03-27 | feat | - | sessions 테이블 last_message 컬럼 추가 — session-db/parser/query-sessions 연동, continue 스킬 마지막 입력 표시, find-context-warning display 포맷 개선 |
 | 2026-03-27 | feat | - | query-sessions.js doc 커맨드 추가 (on-demand sync·마크다운 출력), SESSION-DB.md §9 사용 가이드 신설 |
 | 2026-03-26 | feat | - | 문서 다운로드 버튼 추가 — .md 파일 직접 저장 (일반/상세 구분, _detail 접미어) |
 | 2026-03-25 | docs | - | 스킬 레지스트리 JSON 중앙화 구현 기록 — build-skills-registry.mjs 설계, skill-doctor/session-parser 전환, SessionStart hook 의사결정 근거 포함 |

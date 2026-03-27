@@ -33,22 +33,19 @@ Analyze completed sessions to verify:
 
 ### Step 1.1: Find Session Files
 
-Session files are located in `~/.claude/`:
-
+DB에서 세션 메타 조회:
 ```bash
-# Main session log
-~/.claude/projects/-{encoded-cwd}/{sessionId}.jsonl
+node ~/.claude/my-claude-plugins/shared/query-sessions.js get <sessionId>
+# → file_path 필드로 소스 파일 위치 확인
+```
 
+이후 분석에 필요한 파일:
+```bash
 # Debug log (detailed)
 ~/.claude/debug/{sessionId}.txt
 
 # Agent transcripts (if subagents were used)
-~/.claude/projects/-{encoded-cwd}/agent-{agentId}.jsonl
-```
-
-Use script to locate files:
-```bash
-node scripts/find-session-files.mjs {sessionId}
+# → file_path 기반으로 같은 디렉토리의 agent-{agentId}.jsonl 탐색
 ```
 
 ### Step 1.2: Verify Files Exist
@@ -265,7 +262,6 @@ Flag any mismatches:
 
 | Script | Purpose |
 |--------|---------|
-| `find-session-files.mjs` | Locate all files for a session ID |
 | `extract-subagent-calls.mjs` | Parse subagent invocations from debug log |
 | `extract-hook-events.mjs` | Parse hook events from debug log |
 
@@ -293,6 +289,5 @@ User: "Analyze session 3cc71c9f-d27a-4233-9dbc-c4f07ea6ec5b against .claude/skil
 - **`references/common-issues.md`** - Known issues and troubleshooting
 
 ### Scripts
-- **`scripts/find-session-files.mjs`** - Session file locator
 - **`scripts/extract-subagent-calls.mjs`** - SubAgent call extractor
 - **`scripts/extract-hook-events.mjs`** - Hook event extractor

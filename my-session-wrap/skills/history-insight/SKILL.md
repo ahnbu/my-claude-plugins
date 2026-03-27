@@ -13,13 +13,14 @@ Claude Code 세션 히스토리를 분석하고 인사이트를 추출합니다.
 
 ## Data Location
 
-```
-~/.claude/projects/<encoded-cwd>/*.jsonl
+세션 데이터는 세션DB를 통해 조회한다:
+```bash
+node ~/.claude/my-claude-plugins/shared/query-sessions.js recent [N]
+node ~/.claude/my-claude-plugins/shared/query-sessions.js by-project <name>
+node ~/.claude/my-claude-plugins/shared/query-sessions.js doc <sessionId> --no-sync
 ```
 
-**Path Encoding:** `/Users/foo/project` → `-Users-foo-project`
-
-> 상세 파일 포맷: `references/session-file-format.md`
+Claude/Codex/Gemini 3개 AI 공통 세션DB. 스키마 참조: `SESSION-DB.md`
 
 ---
 
@@ -46,16 +47,14 @@ Claude Code 세션 히스토리를 분석하고 인사이트를 추출합니다.
 ### Step 2: Find Session Files
 
 ```bash
-# Current project only
-find ~/.claude/projects/<encoded-cwd> -name "*.jsonl" -type f
+# 현재 프로젝트
+node ~/.claude/my-claude-plugins/shared/query-sessions.js by-project <project-name> --limit 50
 
-# All sessions (모든 프로젝트)
-find ~/.claude/projects -name "*.jsonl" -type f
+# 전체 세션
+node ~/.claude/my-claude-plugins/shared/query-sessions.js recent 50
 ```
 
-**날짜 필터링**: 파일의 mtime(수정시간) 확인 후 필터. OS별 `stat` 옵션 다름:
-- macOS: `stat -f "%Sm" -t "%Y-%m-%d" <file>`
-- Linux: `stat -c "%y" <file>`
+**필터링**: `--scope <claude|codex|gemini>` 옵션으로 AI 소스 필터. 날짜 필터는 DB의 `timestamp`/`last_timestamp` 필드 활용 (`stat` 불필요).
 
 ---
 
@@ -71,18 +70,19 @@ Session files found?
     └─ 4+ files → Batch Extract Pipeline
 ```
 
-#### 1-3 Files
+#### 1-3 Sessions
 
-직접 Read로 JSONL 파싱. 파일이 크면(≥5000 tokens) `extract-session.mjs` 사용:
 ```bash
-node scripts/extract-session.mjs <session.jsonl>
+node ~/.claude/my-claude-plugins/shared/query-sessions.js doc <sessionId> --no-sync
 ```
 
-#### 4+ Files: Batch Extract Pipeline
+직접 `doc` 출력으로 대화 내용 추출.
+
+#### 4+ Sessions: Batch Extract Pipeline
 
 1. 캐시 디렉토리 생성 (`/tmp/cc-cache/<analysis-name>/`)
 2. 세션 목록 저장 (`sessions.txt`)
-3. jq로 메시지 일괄 추출 (`user_messages.txt`)
+3. 각 세션 `doc --no-sync` 결과를 파일로 리다이렉트 (`session_<id>.md`)
 4. 정리 및 필터링 (`clean_messages.txt`)
 5. Task(opus)로 종합 분석
 
@@ -130,7 +130,7 @@ node scripts/extract-session.mjs <session.jsonl>
 | Scenario | Response |
 |----------|----------|
 | No session files found | "No session files found for this project." |
-| File too large | Auto-preprocess with extract-session.mjs |
+| Session too large | `doc` 출력 분할 후 배치 분석 |
 | jq not installed | "Error: jq is required. Install with: brew install jq" |
 | Task failed | "Warning: Could not process [file]. Skipping." |
 | 0 relevant sessions | "No sessions matched your criteria." |
@@ -145,5 +145,4 @@ node scripts/extract-session.mjs <session.jsonl>
 
 ## Related Resources
 
-- **`scripts/extract-session.mjs`** - JSONL 압축 (thinking, tool_use 제거)
-- **`references/session-file-format.md`** - JSONL 구조 및 파싱
+- **`SESSION-DB.md`** - 세션DB 스키마 및 쿼리 가이드
