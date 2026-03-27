@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-27 | feat | - | resolve-context-warning PostToolUse 훅 및 save-doc-record 스크립트 추가 |
 | 2026-03-27 | refactor | - | wrap SKILL.md Step 0 제거 및 next-handoff.mjs 로직 이동, prompt-context.js .sh→.mjs 참조 수정 |
 | 2026-03-27 | feat | - | 세션 last_message 필드 추가 — 마지막 사용자 메시지 검색·조회 지원 |
 | 2026-03-27 | docs | - | 스킬 description 정제 — 트리거를 /continue 슬래시 커맨드 전용으로 변경, 설명 내용 개선 |
