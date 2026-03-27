@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-27 | refactor | - | cp Step 1 레포 감지 find_save_target.js 스크립트화, files[] 추가, shared/로 이동 |
 | 2026-03-27 | feat | - | 경로 B/C 통합 — handoff 스캔 추가, 3일 TTL, 섹션 레이블 유효기간 표기 |
 | 2026-03-27 | docs | - | 스킬 JSONL→세션DB 전환 작업 기록 저장 (continue/history-insight/session-analyzer, 검증 결과 포함) |
 | 2026-03-27 | refactor | - | continue/history-insight/session-analyzer 스킬 JSONL 직접 조회 → 세션DB 전환 — doc --no-sync 통합, 멀티AI Glob 분기, find/stat 제거 |

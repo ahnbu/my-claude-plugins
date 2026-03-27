@@ -17,26 +17,18 @@ description: "경량 commit-push — 변경사항 분석 → 커밋 → 푸쉬 (
 
 ### Step 1: 레포 감지 및 그룹핑
 
-세션에서 변경/생성한 파일 경로를 기준으로 소속 git 레포를 감지하고 그룹핑한다.
-
-#### 1-1. 변경 파일 기준 레포 감지
-
-세션에서 변경·생성한 파일들의 **고유 디렉토리 목록**을 먼저 도출한 뒤, 각 디렉토리에서 레포를 찾는다:
-
-1. 변경 파일 경로 → `dirname` → 중복 제거 → 고유 디렉토리 set
-2. 각 디렉토리에서 `git rev-parse --show-toplevel` → 레포 루트 감지
-3. 레포 루트 중복 제거
+스크립트 1회 호출로 세션 변경 파일 → 레포 감지 → 그룹핑을 한 번에 수행한다:
 
 ```bash
-# 고유 디렉토리별 1회만 실행
-git -C "<디렉토리>" rev-parse --show-toplevel 2>/dev/null
+node ~/.claude/my-claude-plugins/shared/find_save_target.js <sessionId>
 ```
 
-- git 레포에 속하지 않는 디렉토리 → "git 레포 아님 — 스킵" 안내
+- `sessionId`: system-reminder의 `[session_id=XXXX]` 값
+- 출력 JSON: `{ modified_files, git_repos: [{root, files, file_count}], non_repo_files, recommended_repo }`
+- `git_repos[]` → 커밋 대상 레포 목록으로 사용
+- `non_repo_files[]` → "git 레포 아님 — 스킵" 안내
 
-#### 1-2. 레포별 변경 확인
-
-각 레포에서 전체 변경 파일을 확인한다:
+각 레포에서 실제 변경 확인:
 
 ```bash
 git -C "<REPO>" status --porcelain
@@ -66,8 +58,11 @@ git -C "<REPO>" diff --cached --stat
 #### 2-2. Staging
 
 - 이미 staged된 파일이 있으면 그대로 사용
-- staged 파일이 없으면: 해당 레포에 속한 변경 파일만 `git -C "<REPO>" add <파일명...>`
-- **주의**: `git add -A` 사용 금지. 파일명을 명시하여 add. 민감파일(.env, credentials 등) 제외
+- staged 파일이 없으면: Step 1 스크립트 출력의 `git_repos[i].files[]`를 그대로 사용하여 add:
+  ```bash
+  git -C "<REPO>" add <git_repos[i].files 목록>
+  ```
+- **주의**: `git add -A` 사용 금지. 민감파일(.env, credentials 등) 제외
 
 #### 2-3. 커밋 메시지 생성
 
