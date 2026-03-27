@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-27 | docs | - | wrap 스킬 리팩터링 세션 작업 문서 및 handoff 저장 |
 | 2026-03-27 | refactor | - | SKILL.md Step 0 제거 및 prompt-context.js .sh→.mjs 버그 수정 |
 | 2026-03-27 | docs | - | 이전 세션 검증 최종 handoff 저장 |
 | 2026-03-27 | docs | - | continue 완료마킹·doc-save 이어쓰기 설계 및 cp/wrap 커밋로직 스크립트화 설계 문서 저장 |
