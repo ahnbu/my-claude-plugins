@@ -1,6 +1,6 @@
 ---
 name: continue
-description: "최신 handoff를 읽고 이전 세션 컨텍스트를 재수립. Triggers: 'continue', '이어서', '이전 세션', '컨텍스트 복원', '세션 이어가기'"
+description: "Session ID, handoff 문서, context_limit 데이터 기반으로 이전 세션 컨텍스트 복원. Triggers: /continue 슬래시 커맨드로만 호출"
 ---
 
 # Session Continue
