@@ -58,8 +58,18 @@ if (args.file) {
 }
 
 if (!existsSync(changelogPath)) {
-  process.stderr.write(`CHANGELOG.md를 찾을 수 없습니다: ${changelogPath}\n`);
-  process.exit(1);
+  // CHANGELOG.md 없으면 템플릿으로 자동 생성
+  const templatePath = "C:/Users/ahnbu/CHANGELOG_TEMPLATE.md";
+  if (existsSync(templatePath)) {
+    writeFileSync(changelogPath, readFileSync(templatePath, "utf8"), "utf8");
+  } else {
+    writeFileSync(
+      changelogPath,
+      "# CHANGELOG\n\n| 변경시점 | 구분 | 버전 | 변경 내용 | 변경사유/목적 |\n|---------|------|------|---------|-------------|\n",
+      "utf8"
+    );
+  }
+  process.stderr.write(`✔ CHANGELOG.md 자동 생성: ${changelogPath}\n`);
 }
 
 // 삽입할 행 결정
