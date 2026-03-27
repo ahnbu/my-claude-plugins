@@ -12,9 +12,5 @@ process.stdin.on("end", () => {
     const data = JSON.parse(input);
     const { session_id, prompt } = data;
     if (session_id) console.log(`[session_id=${session_id}]`);
-    if (prompt && /^\/wrap\b/.test(prompt.trim())) {
-      const scriptPath = path.join(__dirname, "..", "skills", "my-session-wrap", "scripts", "next-handoff.mjs");
-      console.log(`[handoff_script=${scriptPath}]`);
-    }
   } catch (_) {}
 });
