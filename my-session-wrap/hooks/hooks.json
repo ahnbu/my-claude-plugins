@@ -18,6 +18,11 @@
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/resolve-context-warning.js\"",
             "timeout": 3000
+          },
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/skill-context-logger.js\"",
+            "timeout": 3000
           }
         ]
       }
