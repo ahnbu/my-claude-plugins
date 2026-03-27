@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+> ARCHIVED (2026-03-27): 이 폴더는 아카이브입니다. 활성 코드는 ~/.claude/에 있습니다.
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## 저장소 개요
