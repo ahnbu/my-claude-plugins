@@ -167,6 +167,17 @@ function extractKeywordsWithFallback(entries) {
   return { keywords: fallback.slice(0, 3), firstMessage: "" };
 }
 
+// ── 마지막 사용자 메시지 추출 ──
+function extractLastMessage(messages) {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i];
+    if (m.role === "user" && m.subtype !== "tool_result" && m.text?.trim()) {
+      return m.text.substring(0, 200);
+    }
+  }
+  return "";
+}
+
 // ── JSONL 파싱 ──
 function parseJSONL(filePath) {
   const content = fs.readFileSync(filePath, "utf8");
@@ -382,6 +393,7 @@ function processSession(filePath) {
     slashCommands,
     skillCalls,
     firstMessage: displayFirstMsg.substring(0, 200),
+    lastMessage: extractLastMessage(mergedMessages),
     projectDisplay: project,
     filePath: absFilePath,
     planSlug,
@@ -568,6 +580,7 @@ function processCodexSession(filePath) {
     toolNames,
     slashCommands,
     firstMessage: firstMsgText.substring(0, 200),
+    lastMessage: extractLastMessage(messages),
     filePath: absFilePath,
   };
 
@@ -624,6 +637,7 @@ function parsePlan(filePath) {
       project,
       projectDisplay: project,
       firstMessage,
+      lastMessage: "",
       charCount: rawText.length,
       gitBranch: "",
       models: [],
@@ -984,6 +998,7 @@ function processGeminiSession(filePath, projectRoot) {
     toolNames,
     slashCommands,
     firstMessage: firstMsgText.substring(0, 200),
+    lastMessage: extractLastMessage(builtMessages),
     filePath: absFilePath,
   };
 
@@ -1148,6 +1163,7 @@ function processAntigravitySession(conversation, exportFilePath) {
     toolNames,
     slashCommands,
     firstMessage: firstMsgText.substring(0, 200),
+    lastMessage: extractLastMessage(builtMessages),
     filePath: exportFilePath || "",
   };
 

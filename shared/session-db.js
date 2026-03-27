@@ -87,6 +87,7 @@ class SessionDB {
         total_output_tokens INTEGER DEFAULT 0,
         tool_names        TEXT,
         first_message     TEXT,
+        last_message      TEXT,
         file_path         TEXT,
         mtime             REAL,
         -- plan 전용
@@ -118,6 +119,9 @@ class SessionDB {
     `);
     try {
       this.db.exec("ALTER TABLE messages ADD COLUMN subtype TEXT");
+    } catch (_) { /* 이미 존재 */ }
+    try {
+      this.db.exec("ALTER TABLE sessions ADD COLUMN last_message TEXT");
     } catch (_) { /* 이미 존재 */ }
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS plan_contents (
@@ -554,9 +558,9 @@ class SessionDB {
         (session_id, type, title, keywords, timestamp, last_timestamp, project, git_branch,
          models, user_entry_count, user_text_message_count, tool_result_count,
          tool_use_count, error_count, total_input_tokens, total_output_tokens,
-         tool_names, first_message, file_path, mtime,
+         tool_names, first_message, last_message, file_path, mtime,
          slug, is_completed, char_count, linked_session_id, plan_slug, originator, slash_commands, skill_calls)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       metadata.sessionId,
       metadata.type || "session",
@@ -576,6 +580,7 @@ class SessionDB {
       metadata.totalOutputTokens || 0,
       JSON.stringify(metadata.toolNames || {}),
       metadata.firstMessage || null,
+      metadata.lastMessage || null,
       metadata.filePath || null,
       mtime,
       metadata.slug || null,
@@ -646,6 +651,7 @@ class SessionDB {
       slashCommands: JSON.parse(row.slash_commands || "[]"),
       skillCalls: JSON.parse(row.skill_calls || "[]"),
       firstMessage: row.first_message || "",
+      lastMessage: row.last_message || "",
       filePath: row.file_path || "",
     };
 

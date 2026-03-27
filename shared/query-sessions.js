@@ -110,6 +110,7 @@ function rowToResult(row) {
     project: row.project || "",
     tool_names: (() => { try { return JSON.parse(row.tool_names || "{}"); } catch { return {}; } })(),
     first_message: row.first_message || "",
+    last_message: row.last_message || "",
     file_path: row.file_path || "",
     plan_slug: row.plan_slug || null,
   };
@@ -120,11 +121,11 @@ function cmdSearch(db, keyword, opts) {
   const like = `%${keyword}%`;
   const rows = db.prepare(`
     SELECT * FROM sessions
-    WHERE (title LIKE ? OR keywords LIKE ? OR tool_names LIKE ? OR first_message LIKE ?)
+    WHERE (title LIKE ? OR keywords LIKE ? OR tool_names LIKE ? OR first_message LIKE ? OR last_message LIKE ?)
     ${scopeFilter}
     ORDER BY timestamp DESC
     LIMIT ?
-  `).all(like, like, like, like, opts.limit);
+  `).all(like, like, like, like, like, opts.limit);
   return rows.map(rowToResult);
 }
 
@@ -333,6 +334,9 @@ function main() {
     process.stderr.write(`Error: DB 열기 실패 — ${err.message}\n`);
     process.exit(1);
   }
+
+  // 스키마 마이그레이션 (컬럼 미존재 시 추가)
+  try { db.exec("ALTER TABLE sessions ADD COLUMN last_message TEXT"); } catch (_) {}
 
   try {
     let result;
