@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-27 | docs | - | cp·wrap 스킬 커밋 로직 개선 2차 작업 기록 |
 | 2026-03-27 | refactor | - | pre-commit hook 글로벌 단일화 — core.hooksPath 제거, 전용 pre-commit trash |
 | 2026-03-27 | refactor | - | cp 스킬 구조 개선(Step 통합) + changelog-add-row CHANGELOG auto-create 추가 |
 | 2026-03-27 | docs | - | wrap 스킬 리팩터링 세션 작업 문서 및 handoff 저장 |
