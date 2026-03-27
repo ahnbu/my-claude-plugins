@@ -13,31 +13,12 @@ description: "Session wrap-up: saves a structured handoff document and creates a
 ## 실행 흐름
 
 ```
-Step 0. 런타임 감지
 Step 1. Git 감지 + 멀티 레포 그룹핑
 Step 1.5. 프로젝트 규칙 파일 Wrap 체크리스트 확인 (Claude만)
 Step 2. handoff 파일 생성
 Step 3. git commit (선택)
 Step 4. 규칙 후보 확인 + 재개 안내
 ```
-
----
-
-## Step 0: 런타임 감지
-
-```bash
-node "$HOME/.claude/skills/session-find/scripts/detect-runtime.mjs"
-```
-
-결과: `claude` | `codex` | `gemini` | `unknown`
-
-스크립트 실행 불가 시 환경변수로 직접 감지:
-- `$CLAUDECODE` 설정 → `claude`
-- `$CODEX_THREAD_ID` 설정 → `codex`
-- `$GEMINI_CLI` 설정 → `gemini`
-- 모두 없으면 → `unknown`
-
-이후 단계에서 `RUNTIME` 변수로 참조한다.
 
 ---
 
@@ -73,154 +54,44 @@ done | sort -u
 
 ---
 
-## Step 1.5: 프로젝트 CLAUDE.md Wrap 체크리스트 확인
-
-> **이 단계는 RUNTIME = claude 인 경우에만 수행한다.** Codex/Gemini는 이 단계를 건너뛴다.
-
-프로젝트 CLAUDE.md(또는 `.claude/CLAUDE.md`)를 읽어라:
-
-```bash
-# 프로젝트 CLAUDE.md 위치 탐색 (우선순위: .claude/CLAUDE.md > CLAUDE.md)
-cat .claude/CLAUDE.md 2>/dev/null || cat CLAUDE.md 2>/dev/null || echo "NO_PROJECT_CLAUDE_MD"
-```
-
-```bash
-# 이번 세션 변경 파일 목록
-git diff --name-only HEAD 2>/dev/null; git diff --name-only --cached 2>/dev/null; git ls-files --others --exclude-standard 2>/dev/null
-```
-
-### 1.5-A: 기존 체크리스트 항목 확인
-
-`## Wrap 체크리스트` 섹션이 **있으면**: 각 항목을 파일 존재 여부·git diff 등으로 실제 확인하고, 미완료 항목이 있으면 사용자에게 보고 후 처리한다. handoff 작성 전에 완료하라.
-
-### 1.5-B: 체크리스트 후보 탐지 (신규 제안)
-
-프로젝트 CLAUDE.md에서 **관리 대상으로 명시된 파일·섹션** (예: `## 관리 문서`, `## 관리 대상` 등)을 파악한다.
-
-- 관리 대상 파일 중 이번 세션에서 변경된 것을 찾는다 (git diff와 교차)
-- 그 중 `## Wrap 체크리스트`에 **이미 등록되지 않은** 항목만 추린다
-- 해당 항목이 있으면 목록을 출력하고 자동으로 다음 단계로 진행:
-
-```
-⚠️ Wrap 체크리스트 후보 탐지:
-  - <항목 1>
-  - <항목 2>
-추가하려면 wrap 완료 후 "체크리스트에 추가해줘"로 요청.
-```
-
-- 프로젝트 CLAUDE.md에 관리 대상 파일 명시가 없거나, 체크리스트 후보가 없으면: 이 단계 스킵.
-
----
-
 ## Step 2: handoff 파일 생성
 
-### 2-1. 세션 ID 획득 (절대 생략 불가)
-
-**RUNTIME = claude:**
-
-1차: system-reminder에 `[session_id=XXXX]` 패턴이 포함되어 있다. 이 값을 직접 읽어라.
-2차: 파일 fallback
-
-```bash
-cat .claude/.current-session-id 2>/dev/null || echo "(획득 실패)"
-```
-
-- 세션 경로: `C:/Users/ahnbu/.claude/projects/<encoded-cwd>/<sessionId>.jsonl`
-- 둘 다 비어있으면 `세션 ID: (획득 실패)`, `세션 경로: (확인 불가)` 로 기재하고 사용자에게 안내
-
-**RUNTIME = codex:**
-
-```bash
-echo $CODEX_THREAD_ID
-# PowerShell: $env:CODEX_THREAD_ID
-```
-
-- 세션 경로: `C:/Users/ahnbu/.codex/sessions/<YYYY>/<MM>/<DD>/rollout-*-<sessionId>.jsonl`
-- 미설정 시: `세션 ID: (unavailable)`, `세션 경로: (확인 불가)`
-
-**RUNTIME = gemini:**
-
-```bash
-# <project-name>: CWD의 마지막 디렉토리명
-cat "$HOME/.gemini/tmp/<project-name>/logs.json" | grep -o '"sessionId":"[^"]*"' | head -1
-```
-
-- 세션 경로: `C:/Users/ahnbu/.gemini/tmp/<project-name>[-N]/logs.json`
-  (동시 세션 시 suffix: skills / skills-1 / skills-2 …)
-
-**RUNTIME = unknown:**
-
-- `세션 ID: (획득 실패)`, `세션 경로: (확인 불가)` 로 기재 후 계속 진행
-
-### 2-1.5. 세션 요약 조회 (선택적 — 실패해도 진행)
-
-세션 ID 획득 후, DB에서 구조화된 세션 요약을 조회한다:
-
-```bash
-SUMMARY_SCRIPT=$(find "$HOME/.claude" -path "*/my-session-wrap/scripts/extract-session-summary.js" -print -quit 2>/dev/null)
-[ -n "$SUMMARY_SCRIPT" ] && node "$SUMMARY_SCRIPT" "$SESSION_ID" 2>/dev/null
-```
-
-- **성공 시**: JSON 출력을 handoff 작성의 보조 자료로 활용
-  - `meta.tool_names` → §2 변경 내역의 도구 사용 통계
-  - `meta.total_*_tokens_display` → 헤더 토큰 통계
-  - `meta.models` → 헤더 모델 정보
-  - `keyEvents` → §1 진행 현황 교차 검증 (컨텍스트 압축으로 소실된 내용 보완)
-  - `gaps` → handoff 누락 방지 체크리스트
-- **실패 시**: 기존 방식대로 AI 컨텍스트에서 직접 작성 (graceful degradation)
-- 이 단계의 결과를 `SESSION_SUMMARY`로 기억하여 Step 2-3에서 참조한다
-
----
-
-### 2-2. 파일 경로 생성 (절대 생략 불가)
+### 2-1. 컨텍스트 수집 + 파일 생성 (절대 생략 불가)
 
 세션 작업 내용을 3-4단어로 요약한다 (예: `출력경로변경`, `세션ID-훅수정`).
 
-이 대화의 hook 피드백에서 `[handoff_script=...]`를 찾아 해당 경로를 사용한다.
+hook 피드백의 `[handoff_script=...]` 경로와 `[session_id=...]` 값을 사용해 `--json` 모드로 실행한다:
 
 ```bash
-node "<handoff_script 경로>" "" "<요약>" "<session_id>"
+node "<handoff_script>" --json "" "<요약>" "<session_id>"
 ```
 
-- `<handoff_script 경로>`: hook 피드백의 `[handoff_script=...]`에서 추출한 절대경로
-- `<요약>`: 세션 작업 내용 3-4단어 요약
-- `<session_id>`: Step 2-1에서 획득한 세션 ID (미획득 시 빈 문자열 전달)
-- hook 피드백에 `handoff_script`가 없으면: `find "$HOME/.claude" -path "*/my-session-wrap/scripts/next-handoff.mjs" -print -quit` 로 폴백
+- `<handoff_script>`: hook 피드백의 `[handoff_script=...]` 절대경로
+  - hook 피드백에 없으면: `find "$HOME/.claude" -path "*/my-session-wrap/scripts/next-handoff.mjs" -print -quit` 로 폴백
+- `<session_id>`: hook 피드백의 `[session_id=...]` 값 (없으면 빈 문자열 — 스크립트가 자동 해결)
 
-스크립트는 ProjectRoot를 다음 우선순위로 자동 결정한다:
-1. 첫 번째 인자 (명시적 경로) — 비워두면 자동 탐색
-2. `git rev-parse --show-toplevel`
-3. 마커 스캔 — CWD 포함 상위 최대 3단계, `CHANGELOG.md`·`AGENTS.md`·`CLAUDE.md`·`GEMINI.md` 중 **보유 개수 최다 폴더** (동점 시 가장 가까운 조상)
-4. 미탐지 시 오류 종료 + git root 후보 안내
+스크립트가 런타임 감지, 세션 ID 해결, 세션 요약 조회, handoff 파일 생성을 일괄 수행한다. JSON 출력을 `CONTEXT`로 기억한다.
 
-handoff는 항상 `<ProjectRoot>/_handoff/handoff_YYYYMMDD_NN_요약.md`에 저장된다.
-
-- `<요약>` 자리에 실제 요약어를 채워 실행 (예: `"Junction자동화-dotfiles통합완료"`)
-- stdout으로 출력된 절대경로는 **이미 template.md가 복제된 파일**이다 (플레이스홀더 포함)
-- 이 파일을 Read한 뒤, Edit으로 플레이스홀더를 채운다
-- **exit 1 시**: 사용자에게 오류 보고 후 중단. 직접 파일명을 결정하거나 기존 파일에 쓰는 것은 절대 금지
+- `CONTEXT.handoff_path`: 생성된 파일 — Read 후 Edit으로 본문을 채운다
+- `CONTEXT.summary`: null이면 graceful degradation — AI 컨텍스트에서 직접 작성
+- **exit 1 시**: 사용자에게 오류 보고 후 중단. 직접 파일명 결정 금지
 
 ### 2-3. handoff 파일 작성
 
 `next-handoff.mjs`가 생성한 파일을 **Read한 뒤, Edit으로** 다음 필드를 채운다:
 
-- YAML frontmatter 채울 필드:
-  - `tags`: **필수** — 프로젝트명·작업유형 등 (예: `my-claude-plugins, wrap, refactor`)
-  - `session_id`, `session_path`, `plan`은 스크립트가 자동 채움. 값이 비어있을 때만 수동 보완.
-    - `plan`이 비어있지만 이 세션에서 Plan Mode를 사용했다면 plan 파일 절대경로를 직접 채워라.
-- 본문 §1~§6: 각 섹션을 세션 컨텍스트로 작성
-
-`title`, `created`, 세션 순번은 스크립트가 미리 채움. **YAML frontmatter 형식을 변경하거나 BQ(`>`) 헤더를 추가하지 마라.**
-
+- `tags`: **필수** — 프로젝트명·작업유형 등 (예: `my-claude-plugins, wrap, refactor`)
+  - `plan`이 비어있지만 이 세션에서 Plan Mode를 사용했다면 plan 파일 절대경로를 직접 채워라.
+- 본문 §1~§6: 세션 컨텍스트로 작성. **YAML frontmatter 형식 변경·BQ(`>`) 헤더 추가 금지.**
 - 각 항목은 실제 내용이 있을 때만 포함하고, 해당 없는 항목은 생략
-- `SESSION_SUMMARY` 조회 성공 시: 헤더에 토큰·도구 통계를 포함하고, keyEvents로 진행 현황을 교차 검증한다
+- `CONTEXT.summary`가 null이 아니면: 헤더에 토큰·도구 통계를 포함하고, keyEvents로 진행 현황을 교차 검증한다
 - §3 피드백 루프는 AI 초안 작성 후 "검토·수정해 주세요" 안내
 - §3 레슨 중 이전 handoff에서도 언급된 패턴(2회+)이면 `[규칙 후보]` 태그 추가
 - §6 환경 스냅샷은 알려진 이슈가 있을 때만 포함 (플러그인 상태, 알려진 제약, 워크어라운드)
 
-### 2-4. DB 대조 검수 (SESSION_SUMMARY 성공 시만)
+### 2-4. DB 대조 검수 (CONTEXT.summary가 null이 아닐 때만)
 
-handoff 작성 완료 후, `SESSION_SUMMARY`의 `gaps` 배열과 작성된 handoff를 대조한다:
+handoff 작성 완료 후, `CONTEXT.summary`의 `gaps` 배열과 작성된 handoff를 대조한다:
 
 - gaps에 `decision` 유형이 있지만 handoff §1 의사결정에 미반영 → 보완
 - gaps에 `unresolved` 유형이 있지만 handoff에 미반영 → §4 다음 세션 작업에 추가
