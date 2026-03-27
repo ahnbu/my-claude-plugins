@@ -10,6 +10,7 @@
 
 | 날짜 | 타입 | 버전 | 변경 내용 |
 |------|------|------|-----------|
+| 2026-03-27 | docs | - | 스킬별 컨텍스트 소모량 추적 시스템 설계 문서 + handoff 저장 |
 | 2026-03-27 | feat | - | 스킬별 컨텍스트 소모량 추적 시스템 — skill-context-logger.js hook, statusline cp% 상시 기록, analyze-skill-context.mjs 분석 스크립트 추가 |
 | 2026-03-27 | docs | - | cp·wrap 스킬 커밋 로직 개선 2차 작업 기록 |
 | 2026-03-27 | refactor | - | pre-commit hook 글로벌 단일화 — core.hooksPath 제거, 전용 pre-commit trash |
